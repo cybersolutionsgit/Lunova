@@ -3202,41 +3202,6 @@ fieldset.editor-content:disabled {
   box-shadow: 0 3px 12px #57334725;
   pointer-events: none;
 }
-.joystick-help {
-  position: absolute;
-  width: 1px;
-  height: 1px;
-  overflow: hidden;
-  clip-path: inset(50%);
-}
-
-/* The thumb area has no visible button; the joystick only appears while held. */
-.touch-movement-area {
-  display: none;
-}
-@media (pointer: coarse), (max-width: 580px) {
-  .touch-movement-area {
-    display: block;
-    position: absolute;
-    right: 0;
-    bottom: 0;
-    width: 44%;
-    height: 34%;
-    z-index: 12;
-    padding: 0;
-    border: 0;
-    background: transparent;
-    touch-action: none;
-    user-select: none;
-  }
-}
-.touch-movement-area .touch-joystick {
-  bottom: auto;
-  right: auto;
-  transform: translate(-50%, -50%);
-  pointer-events: none;
-}
-
 .resume-look {
   position: absolute;
   left: 50%;
@@ -3250,8 +3215,21 @@ fieldset.editor-content:disabled {
   padding: 10px 16px;
   font-size: 12px;
 }
-@media (pointer: coarse), (max-width: 580px) {
+@media (pointer: coarse) {
   .resume-look {
     display: none;
   }
+}
+
+.floating-joystick-layer {
+  position: fixed;
+  inset: 0;
+  z-index: 12;
+  pointer-events: none;
+}
+.floating-joystick-layer .touch-joystick {
+  bottom: auto;
+  right: auto;
+  transform: translate(-50%, -50%);
+  pointer-events: none;
 }

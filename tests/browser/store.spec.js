@@ -47,22 +47,26 @@ test("mobile touch movement, graphics, search and responsive width", async ({
   await page.goto("/");
   const marker = page.getByTestId("player-marker");
   await expect(marker).toHaveAttribute("data-z", "9.00");
-  const forward = await page
-    .getByRole("button", { name: "Touch movement area" })
-    .boundingBox();
-  await page.mouse.move(
-    forward.x + forward.width / 2,
-    forward.y + forward.height * 0.2,
-  );
-  await page.mouse.down();
-  await page.mouse.move(
-    forward.x + forward.width / 2,
-    forward.y + forward.height * 0.2 - 38,
-  );
+  const session = await page.context().newCDPSession(page);
+  await session.send("Emulation.setTouchEmulationEnabled", {
+    enabled: true,
+    maxTouchPoints: 1,
+  });
+  await session.send("Input.dispatchTouchEvent", {
+    type: "touchStart",
+    touchPoints: [{ x: 130, y: 400 }],
+  });
+  await session.send("Input.dispatchTouchEvent", {
+    type: "touchMove",
+    touchPoints: [{ x: 130, y: 362 }],
+  });
   await expect
     .poll(async () => Number(await marker.getAttribute("data-z")))
     .toBeLessThan(8.5);
-  await page.mouse.up();
+  await session.send("Input.dispatchTouchEvent", {
+    type: "touchEnd",
+    touchPoints: [],
+  });
   await page
     .getByRole("button", { name: "Store controls", exact: true })
     .click();

@@ -145,7 +145,7 @@ test("product popups remain inside browser full screen", async ({ page }) => {
     .getByRole("button", { name: "Exit full screen", exact: true })
     .click();
 });
-test("touch screens retain drag look without opening the product underneath", async ({
+test("mobile drag anywhere walks without opening a product or turning the camera", async ({
   browser,
 }) => {
   const context = await browser.newContext({
@@ -170,11 +170,7 @@ test("touch screens retain drag look without opening the product underneath", as
     type: "touchEnd",
     touchPoints: [],
   });
-  await expect
-    .poll(async () =>
-      Math.abs(Number(await canvas.getAttribute("data-look-yaw"))),
-    )
-    .toBeGreaterThan(0.1);
+  expect(await canvas.getAttribute("data-look-yaw")).toBe("0");
   await expect(page.getByRole("dialog")).toHaveCount(0);
   await context.close();
 });
@@ -266,12 +262,9 @@ test("touch joystick walks, keeps camera steady and stops on release or collapse
   const marker = page.getByTestId("player-marker");
   const canvas = page.getByTestId("store-canvas");
   await expect(marker).toHaveAttribute("data-z", "9.00");
-  const box = await page
-    .getByRole("button", { name: "Touch movement area", exact: true })
-    .boundingBox();
   const session = await context.newCDPSession(page);
-  const x = box.x + box.width / 2,
-    y = box.y + box.height / 2;
+  const x = 100,
+    y = 350; // Deliberately outside the former lower-right region.
   await session.send("Input.dispatchTouchEvent", {
     type: "touchStart",
     touchPoints: [{ x, y }],
@@ -333,4 +326,42 @@ test("captured centre click opens a product and releases the mouse for its popup
   await expect(
     page.getByRole("button", { name: "Click to look around", exact: true }),
   ).toBeVisible();
+});
+
+test("a narrow desktop does not activate touch joystick with mouse dragging", async ({
+  page,
+}) => {
+  await page.setViewportSize({ width: 390, height: 844 });
+  await page.goto("/");
+  const marker = page.getByTestId("player-marker");
+  await expect(marker).toHaveAttribute("data-z", "9.00");
+  await page.mouse.move(100, 350);
+  await page.mouse.down();
+  await page.mouse.move(100, 310);
+  await page.waitForTimeout(250);
+  await expect(page.getByTestId("touch-joystick")).toHaveCount(0);
+  expect(await marker.getAttribute("data-z")).toBe("9.00");
+  await page.mouse.up();
+});
+
+test("mobile taps still select 3D products with full-screen joystick enabled", async ({
+  browser,
+}) => {
+  const context = await browser.newContext({
+    viewport: { width: 390, height: 844 },
+    isMobile: true,
+    hasTouch: true,
+  });
+  const page = await context.newPage();
+  await page.goto("/");
+  await expect(page.getByTestId("player-marker")).toHaveAttribute(
+    "data-z",
+    "9.00",
+  );
+  await page.touchscreen.tap(195, 414);
+  await expect(
+    page.getByRole("dialog", { name: "A closer look" }),
+  ).toBeVisible();
+  await expect(page.getByTestId("touch-joystick")).toHaveCount(0);
+  await context.close();
 });

@@ -257,7 +257,7 @@ function Market() {
     gl.domElement.dataset.storeType = settings.type;
     gl.domElement.setAttribute(
       "aria-label",
-      `${settings.name}: ${settings.type} virtual store. Use WASD to walk; click Click to look around to capture the mouse, or drag to look on touch screens.`,
+      `${settings.name}: ${settings.type} virtual store. Use WASD to walk; click Click to look around to capture the mouse, or drag to walk on touch screens.`,
     );
   }, [gl, settings.type, settings.name]);
   const products = useCatalog((s) => s.products);
@@ -589,7 +589,7 @@ export default function StoreScene({ enabled = true, onPosition }) {
         onCreated={({ gl }) => {
           gl.domElement.setAttribute(
             "aria-label",
-            "Interactive 3D lingerie boutique. Use WASD to move. Click Click to look around to capture the mouse; Escape releases it. Drag to look on touch screens and click products to inspect them.",
+            "Interactive 3D lingerie boutique. Use WASD to move. Click Click to look around to capture the mouse; Escape releases it. Drag to walk on touch screens and click products to inspect them.",
           );
           gl.domElement.setAttribute("data-testid", "store-canvas");
         }}
