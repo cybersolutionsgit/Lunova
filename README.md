@@ -14,7 +14,7 @@ Open **Collections → Admin**, enter the administrator username/password, and s
 
 - **Products:** create, edit, delete, update prices/descriptions/photos, assign one of twelve 3D positions, edit demo quantity limits, import public WooCommerce products, and import/export catalog JSON. Uploads are compressed JPG/PNG/WebP; HTTPS photo URLs work too. Save/Publish updates the shared virtual store. WordPress is a separate source and is not written back to.
 - **Store & theme:** choose boutique, shoe shop, bakery, supermarket, beauty, jewelry, electronics, furniture or general store. Edit store name, tagline, description, contact/address/website/logo and five theme colors.
-- **Niche fixtures:** boutique glass mannequin cases, shoe displays, glass bakery counters, supermarket shelving, beauty counters, jewelry showcases, electronics stands and home/furniture displays. Props are stylized illustrations of the niche, not exact 3D versions of the products; featured photos show the actual merchandise. Changing niche preserves products and existing collections. Additional products beyond the twelve display slots remain in Product view.
+- **Niche fixtures:** boutique glass photo cases, shoe displays, glass bakery counters, supermarket shelving, beauty counters, jewelry showcases, electronics stands and home/furniture displays. Props are stylized illustrations of the niche, not exact 3D versions of the products; featured photos show the actual merchandise. Changing niche preserves products and existing collections. Additional products beyond the twelve display slots remain in Product view.
 - **Security:** server-authorized reads/writes, random sessions with hashed tokens, Secure/HttpOnly/SameSite cookies, origin checks on mutations, failed-login limits, eight-hour expiry, logout and password-rotation invalidation. Concurrent edits use revisions to prevent overwriting another session's save. Save errors leave published state unchanged.
 
 New customer visits/reloads see the latest published database state. Open tabs do not automatically live-refresh. Cart hydration waits for the shared catalog before pruning unknown product IDs, so newly published products remain in a saved bag.
@@ -67,8 +67,8 @@ The bundled real product snapshot retains `originalImage` and source product URL
 
 See [AGENTS.md](AGENTS.md) for architecture, [docs/ROADMAP.md](docs/ROADMAP.md) for milestones, and [docs/CMS_SETUP.md](docs/CMS_SETUP.md) for setup/troubleshooting.
 
-## Hosted photo-to-3D models
+## Product displays
 
-Admin products now support a free hosted TripoSR connector: generate one model, opt a product into automatic generation on photo changes, or run **Generate missing 3D models** sequentially. Successful GLBs are saved in the existing D1 database and displayed in cases in full graphics; photos remain the fallback. No personal computer/GPU or paid API is connected. Free provider quotas/availability apply, and reconstruction is approximate.
+Boutique cases show large, centred featured photos. There are no mannequin forms, generated product models, external generation controls or AI service requests. Other store types retain their procedural shelf/counter props. Existing product photos, catalog editing, cart and navigation remain available.
 
-**Live AI conversion is not verified:** this development environment's network proxy blocks Hugging Face. The integration is tested with synthetic models and provider fixtures. A real provider service check/conversion is still required. An owner-supplied server-only `HF_TOKEN` may be needed for free account access. See [docs/IMAGE_TO_3D.md](docs/IMAGE_TO_3D.md) for exact account steps, supported API, limits, activation and migration.
+For deployment cleanup, remove the unused `HF_TOKEN` secret and `HF_SPACE_URL` variable from Cloudflare Pages, and revoke the old provider token in its account settings. If the retired integration created database tables, `migrations/0002_remove_generated_models.sql` drops only those unused tables; it preserves products/settings, admin sessions and login limits. No automatic database deletion is performed by customer requests.

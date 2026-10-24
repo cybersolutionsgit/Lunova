@@ -21,65 +21,6 @@ function Pole({
     </mesh>
   );
 }
-function Form({ position, color, category }) {
-  const long = category === "sleepwear" || category === "robes";
-  return (
-    <group position={position}>
-      <mesh position={[0, 0.08, 0]}>
-        <cylinderGeometry args={[0.42, 0.45, 0.12, 24]} />
-        <meshStandardMaterial
-          color="#af9069"
-          metalness={0.5}
-          roughness={0.35}
-        />
-      </mesh>
-      <Pole position={[0, 0.48, 0]} height={0.8} radius={0.035} />
-      <mesh position={[0, 1.55, 0]} scale={[0.35, 0.58, 0.2]} castShadow>
-        <sphereGeometry args={[1, 20, 18]} />
-        <meshStandardMaterial color="#d4c3b6" roughness={0.9} />
-      </mesh>
-      <mesh position={[0, 1.22, 0]} scale={[0.32, 0.24, 0.22]}>
-        <sphereGeometry args={[1, 20, 16]} />
-        <meshStandardMaterial color="#d4c3b6" />
-      </mesh>
-      <Pole position={[0, 2.17, 0]} height={0.16} radius={0.09} />
-      {long ? (
-        <>
-          <mesh position={[0, 1.4, 0]} castShadow>
-            <cylinderGeometry args={[0.32, 0.47, 1.2, 24]} />
-            <meshStandardMaterial color={color} roughness={0.45} />
-          </mesh>
-          {category === "robes" && (
-            <Box
-              position={[0, 1.45, 0.3]}
-              size={[0.65, 0.065, 0.06]}
-              color="#d6b497"
-            />
-          )}
-        </>
-      ) : (
-        <>
-          <mesh position={[0, 1.8, 0.035]} scale={[0.365, 0.19, 0.215]}>
-            <sphereGeometry args={[1, 20, 12]} />
-            <meshStandardMaterial color={color} roughness={0.75} />
-          </mesh>
-          <mesh position={[0, 1.15, 0.025]} scale={[0.33, 0.16, 0.235]}>
-            <sphereGeometry args={[1, 20, 12]} />
-            <meshStandardMaterial color={color} roughness={0.75} />
-          </mesh>
-          {[-0.24, 0.24].map((x) => (
-            <Box
-              key={x}
-              position={[x, 1.98, 0]}
-              size={[0.045, 0.3, 0.23]}
-              color={color}
-            />
-          ))}
-        </>
-      )}
-    </group>
-  );
-}
 function Glass({ position, size }) {
   return (
     <mesh position={position}>
@@ -202,14 +143,7 @@ export function FixtureShell({ type, theme }) {
 }
 export function FixtureProps({ type, product }) {
   const color = product?.color || "#8b5263";
-  if (type === "boutique")
-    return (
-      <Form
-        position={[-0.4, 0.12, 0]}
-        color={color}
-        category={product?.category}
-      />
-    );
+  if (type === "boutique") return null;
   if (type === "shoes")
     return (
       <>
@@ -337,7 +271,7 @@ export const photoPosition = (type) =>
   type === "mart"
     ? { position: [0.65, 2.35, 0.15], width: 0.65 }
     : type === "boutique"
-      ? { position: [0.64, 1.65, 0.55], width: 0.64 }
+      ? { position: [0, 1.6, 0.25], width: 1.45 }
       : ["bakery", "beauty", "jewelry"].includes(type)
         ? { position: [0.65, 1.18, 0.55], width: 0.6 }
         : { position: [0.65, 1.85, 0.16], width: 0.75 };

@@ -1,7 +1,3 @@
 # Server-only local configuration. Copy to .dev.vars and set your own password.
 ADMIN_USERNAME=Admin
 ADMIN_PASSWORD=
-# Optional server-only token for the hosted free image-to-3D provider.
-HF_TOKEN=
-# Default candidate; use another compatible TripoSR Space if needed.
-HF_SPACE_URL=https://jose16062007-triposr.hf.space

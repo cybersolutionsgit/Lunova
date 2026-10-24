@@ -37,8 +37,8 @@ function StoreSettings() {
         <p>
           Changing the store type changes 3D fixtures and collections. It keeps
           your existing products; add or import matching products separately.
-          Mannequins and decorative props are stylized, not exact product
-          models.
+          Featured photos represent your products. Other store types retain
+          their decorative display props.
         </p>
       </div>
       {error && (

@@ -240,44 +240,65 @@ test("login rejects malformed bodies and password rotation revokes existing sess
   assert.equal(response.status, 401);
 });
 
-test("model generation is admin-only and rejects cross-site requests without calling the provider", async () => {
-  assert.equal((await request("/api/admin/models/status")).status, 401);
-  assert.equal(
-    (
-      await request("/api/admin/models/generate", {
-        method: "POST",
-        body: JSON.stringify({ image: "test" }),
-      })
-    ).status,
-    401,
+test("removed model generation and model asset routes stay unavailable", async () => {
+  for (const [path, method] of [
+    ["/api/admin/models/status", "GET"],
+    ["/api/admin/models/generate", "POST"],
+    ["/api/models/" + "a".repeat(64) + ".glb", "GET"],
+  ]) {
+    const response = await request(path, {
+      method,
+      ...(method === "POST"
+        ? { body: JSON.stringify({ image: "unused" }) }
+        : {}),
+    });
+    assert.equal(response.status, 404);
+  }
+});
+
+test("retired asset table cleanup preserves the catalog and administrator tables", async () => {
+  const before = await db
+    .prepare("SELECT catalog,settings,revision FROM store_config WHERE id=1")
+    .first();
+  for (const name of [
+    "model_chunks",
+    "generated_models",
+    "model_generation_lock",
+  ])
+    await db.prepare(`CREATE TABLE IF NOT EXISTS ${name} (id TEXT)`).run();
+  const cleanup = await readFile(
+    "migrations/0002_remove_generated_models.sql",
+    "utf8",
   );
-  const login = await request("/api/admin/login", {
-    method: "POST",
-    body: JSON.stringify({ username, password }),
-  });
-  const current = login.headers.get("set-cookie").split(";")[0];
-  assert.equal(
-    (
-      await request("/api/admin/models/generate", {
-        method: "POST",
-        headers: { Cookie: current, Origin: "https://attacker.test" },
-        body: JSON.stringify({ image: "test" }),
-      })
-    ).status,
-    403,
+  await db.exec(
+    cleanup
+      .split("\n")
+      .filter((line) => !line.startsWith("--"))
+      .join(" "),
   );
-  assert.equal(
-    (
-      await request("/api/admin/models/generate", {
-        method: "POST",
-        headers: { Cookie: current },
-        body: JSON.stringify({ image: "not-an-image" }),
-      })
-    ).status,
-    400,
+  assert.deepEqual(
+    await db
+      .prepare("SELECT catalog,settings,revision FROM store_config WHERE id=1")
+      .first(),
+    before,
   );
-  assert.equal(
-    (await request("/api/models/" + "a".repeat(64) + ".glb")).status,
-    404,
-  );
+  for (const name of ["store_config", "admin_sessions", "login_limits"])
+    assert.ok(
+      await db
+        .prepare("SELECT name FROM sqlite_master WHERE type='table' AND name=?")
+        .bind(name)
+        .first(),
+    );
+  for (const name of [
+    "model_chunks",
+    "generated_models",
+    "model_generation_lock",
+  ])
+    assert.equal(
+      await db
+        .prepare("SELECT name FROM sqlite_master WHERE type='table' AND name=?")
+        .bind(name)
+        .first(),
+      null,
+    );
 });

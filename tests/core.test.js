@@ -252,3 +252,26 @@ test("cart hydration defers unknown product pruning until the shared catalog loa
   );
   assert.deepEqual(hydrateCart(null), {});
 });
+
+test("photo-only catalogs discard retired asset fields while preserving product details", () => {
+  const product = publishedCatalog.products[0];
+  const result = validateCatalog({
+    ...publishedCatalog,
+    products: [
+      {
+        ...product,
+        presentation: "mannequin",
+        modelUrl: "/api/models/" + "a".repeat(64) + ".glb",
+        modelImageHash: "b".repeat(64),
+        autoModel: true,
+      },
+    ],
+  });
+  const clean = result.products[0];
+  assert.equal(clean.presentation, "photo");
+  for (const key of ["modelUrl", "modelImageHash", "autoModel"])
+    assert.equal(Object.hasOwn(clean, key), false);
+  assert.equal(clean.image, product.image);
+  assert.equal(clean.name, product.name);
+  assert.equal(clean.price, product.price);
+});

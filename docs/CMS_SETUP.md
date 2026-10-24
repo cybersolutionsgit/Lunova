@@ -45,7 +45,7 @@ Use **Publish** to save. Check the result in a separate private/incognito window
 
 ## Store types and limits
 
-Boutique, shoes, bakery, supermarket, beauty, jewelry, electronics, furniture and general store have distinct procedural fixtures. Boutique uses glass mannequin cases; bakery uses glass counters; supermarket uses shelf rows. Decorative garments/props are stylized and do not replace actual featured photos. Changing type does not delete or replace products. Existing product collections are retained so merchandise does not disappear. Up to twelve products occupy fixed 3D positions; additional products remain searchable in Product view. Fixture footprints stay fixed for collision safety.
+Boutique, shoes, bakery, supermarket, beauty, jewelry, electronics, furniture and general store have distinct procedural fixtures. Boutique uses glass photo cases; bakery uses glass counters; supermarket uses shelf rows. Other niche props are decorative; boutique product cases use featured photos. Changing type does not delete or replace products. Existing product collections are retained so merchandise does not disappear. Up to twelve products occupy fixed 3D positions; additional products remain searchable in Product view. Fixture footprints stay fixed for collision safety.
 
 The CMS publishes the virtual store only. A WooCommerce import is read-only; changes do not write back to WordPress or continuously sync with it. Stock remains a demo quantity limit. Photos can use HTTPS URLs or compressed uploads; the shared catalog is capped at 1.5 MB encoded to fit D1 row limits. Export your catalog periodically. Theme colors change the interface and environment; test readable colors on mobile.
 

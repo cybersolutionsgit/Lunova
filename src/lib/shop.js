@@ -1,8 +1,8 @@
 export const STORE_TYPES = {
   boutique: {
     name: "Boutique",
-    fixture: "glass-mannequin",
-    description: "Glass mannequin cases with featured photos",
+    fixture: "glass-photo",
+    description: "Glass cases with large featured product photos",
     collections: [
       ["sets", "Lingerie sets", "heart"],
       ["bras", "Bras & bralettes", "sparkles"],

@@ -5,7 +5,6 @@ import { useWorld, useCatalog } from "../lib/store";
 import { displays, movePlayer } from "../lib/world";
 import { FixtureShell, FixtureProps, photoPosition } from "./StoreFixtures";
 import { movement } from "../lib/controls";
-import GeneratedProductModel from "./GeneratedProductModel";
 function labelTexture(
   text,
   fg = "#674451",
@@ -182,7 +181,6 @@ function Display({ fixture, index, product, map }) {
   const settings = useCatalog((s) => s.settings);
   const { type, theme } = settings;
   const photo = photoPosition(type);
-  const quality = useWorld((s) => s.quality);
   return (
     <group
       position={[fixture.position[0], 0, fixture.position[1]]}
@@ -219,15 +217,7 @@ function Display({ fixture, index, product, map }) {
           }}
           onPointerOut={() => (document.body.style.cursor = "auto")}
         >
-          {product.modelUrl && quality === "high" ? (
-            <GeneratedProductModel
-              url={product.modelUrl}
-              type={type}
-              fallback={<FixtureProps type={type} product={product} />}
-            />
-          ) : (
-            <FixtureProps type={type} product={product} />
-          )}
+          <FixtureProps type={type} product={product} />
           <Photo map={map} position={photo.position} width={photo.width} />
         </group>
       )}

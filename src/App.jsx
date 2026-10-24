@@ -708,8 +708,8 @@ export default function App() {
               <div className="demo-note">
                 <VolumeX size={18} />
                 <p>
-                  This prototype has no sound. Product photos appear on display
-                  rails; mannequin garments are stylized.
+                  This prototype has no sound. Product photos appear in the
+                  display cases.
                 </p>
               </div>
             </div>
@@ -737,9 +737,9 @@ export default function App() {
                     Click “Click to look around” to keep your cursor centred
                     while looking. Press Esc to release it for menus. Hold a
                     mouse button to pause looking; release to resume. On touch
-                    screens, drag to walk. Click a product photo or mannequin to
-                    see its details. Optional mouse capture lets you turn
-                    continuously; press Esc to release it.
+                    screens, drag to walk. Click a product photo to see its
+                    details. Optional mouse capture lets you turn continuously;
+                    press Esc to release it.
                   </p>
                 </section>
               </div>

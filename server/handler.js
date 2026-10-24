@@ -1,10 +1,3 @@
-import {
-  providerInfo,
-  providerOrigin,
-  generateStored,
-  modelResponse,
-  ModelError,
-} from "./models.js";
 import { defaultCatalog } from "../src/lib/products.js";
 import { validateCatalog } from "../src/lib/catalog.js";
 import { defaultSettings, validateSettings } from "../src/lib/shop.js";
@@ -106,51 +99,6 @@ async function secureEqual(a, b) {
 export async function handleApi(req, env = {}) {
   const path = new URL(req.url).pathname;
   try {
-    const modelPath = path.match(/^\/api\/models\/([a-f0-9]{64})\.glb$/);
-    if (modelPath && req.method === "GET")
-      return modelResponse(req, env, modelPath[1]);
-    if (path.startsWith("/api/admin/models/")) {
-      if (!configured(env))
-        return json(
-          {
-            error: "Configure the CMS database and administrator secret first.",
-          },
-          503,
-        );
-      if (!(await session(req, env)))
-        return json({ error: "Please log in as the administrator." }, 401);
-      try {
-        if (path === "/api/admin/models/status" && req.method === "GET") {
-          const provider = await providerInfo(env);
-          return json({
-            ready: true,
-            provider: "TripoSR on Hugging Face",
-            space: provider.origin,
-            authenticated: !!String(env.HF_TOKEN || "").trim(),
-          });
-        }
-        if (path === "/api/admin/models/generate" && req.method === "POST") {
-          if (!sameOrigin(req))
-            return json({ error: "Request origin is not allowed." }, 403);
-          const body = await readBody(req, 910000);
-          return json(await generateStored(body.image, env));
-        }
-        return json({ error: "Not found." }, 404);
-      } catch (e) {
-        return json(
-          {
-            ready: false,
-            code: e instanceof ModelError ? e.code : "model_internal_error",
-            tokenConfigured: !!String(env.HF_TOKEN || "").trim(),
-            error:
-              e instanceof ModelError
-                ? e.message
-                : "The model connector could not complete its service check (model_internal_error). Your photos are unchanged; no paid fallback is used.",
-          },
-          e instanceof ModelError ? e.status : 503,
-        );
-      }
-    }
     if (path === "/api/store" && req.method === "GET")
       return json({ ...(await readStore(env)), configured: configured(env) });
     if (path === "/api/admin/session" && req.method === "GET")

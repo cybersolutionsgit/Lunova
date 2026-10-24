@@ -18,9 +18,6 @@ export async function api(path, options = {}) {
   if (!response.ok) {
     const e = new Error(result.error || "Could not complete the request.");
     e.status = response.status;
-    if (typeof result.code === "string") e.code = result.code;
-    if (typeof result.tokenConfigured === "boolean")
-      e.tokenConfigured = result.tokenConfigured;
     throw e;
   }
   return result;
