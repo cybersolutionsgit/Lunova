@@ -8,7 +8,7 @@ Lunova Secrets is a browser-based 3D lingerie boutique, replacing the original g
 
 - `src/App.jsx`: responsive shell, catalog, product details, demo cart, settings and guidance.
 - `src/components/StoreScene.jsx`: procedural clothing rails, photo panels, stylized mannequin forms, textures, frame-based player controls, graphics fallback.
-- `src/lib/products.js`: collection definitions, default JSON catalog and currency formatting. `src/data/catalog.json` is the published seed; samples must remain labelled.
+- `src/lib/products.js`: collection definitions, default JSON catalog and currency formatting. `src/data/catalog.json` is the published snapshot of 21 real WooCommerce products in PKR. `src/data/sample-catalog.json` retains the original eight labelled samples.
 - `src/lib/world.js`: 12 fixed display footprints, bounded movement with substeps, safe collection positions.
 - `src/lib/controls.js`: transient touch movement shared with the render loop.
 - `src/lib/cart.js`: pure cart validation, stock caps and integer-cent totals.
@@ -22,7 +22,7 @@ Lunova Secrets is a browser-based 3D lingerie boutique, replacing the original g
 
 ## Owner direction
 
-Keep developing on Cloudflare for now. The owner plans to move files/database onto existing hosting later and keep WordPress at lunovasecrets.com; the boutique uses shop.lunovasecrets.com. Evaluate WooCommerce before adding a separate backend. Use the publicly visible source catalog when available; do not invent real listings or claim a successful live import when blocked. Demo quantity caps are not live inventory. A product photo does not create an accurate 3D garment; mannequin mode is stylized and paired with the photo. For public catalog changes use a reviewed seed JSON commit. Local editor changes are device-only and must be clearly labelled as such.
+Keep developing on Cloudflare for now. The owner plans to move files/database onto existing hosting later and keep WordPress at lunovasecrets.com; the boutique uses shop.lunovasecrets.com. Evaluate WooCommerce before adding a separate backend. The owner supplied the 21-product public export; live feed IDs were matched and featured images copied unchanged into `public/products/catalog/`. Each real product retains originalImage provenance. No automatic synchronization is enabled. Use the publicly visible source catalog when available; do not invent real listings or claim a successful live import when blocked. Demo quantity caps are not live inventory. A product photo does not create an accurate 3D garment; mannequin mode is stylized and paired with the photo. For public catalog changes use a reviewed seed JSON commit. Local editor changes are device-only and must be clearly labelled as such.
 
 ## Workflow
 

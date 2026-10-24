@@ -11,7 +11,8 @@ A procedural 3D store, first-person/touch movement, bounded collision, product i
 - Device-local product editor: photos/uploads, names/descriptions, prices, demo limits, color, display slots and presentation.
 - Public WooCommerce catalog importer with pagination, import preview, validated JSON import/export, and explicit CORS/error states. Read-only access; no changes to the live WordPress site.
 - Test cart reconciliation after edits/removal, display collision, product selection, mobile controls and import failure handling.
-- **Limits:** source-site import remains unverified until live access succeeds. Local edits are not published to other visitors. Mannequins are stylized forms, not accurate garment models. At most 12 products are in 3D at once; all imported products are in the catalog.
+- The supplied and live WooCommerce feeds matched 21 product IDs; the published snapshot includes PKR prices and locally copied featured images.
+- **Limits:** this snapshot does not sync automatically; browser import still depends on source CORS. Local edits are not published to other visitors. Mannequins are stylized forms, not accurate garment models. At most 12 products are in 3D at once; all imported products are in the catalog.
 
 ## Next — owner-directed design and real catalog
 

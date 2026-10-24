@@ -14,6 +14,7 @@ import { useCatalog, useWorld } from "../lib/store";
 import {
   categories,
   defaultCatalog,
+  sampleCatalog,
   money,
   currencyScale,
 } from "../lib/products";
@@ -512,6 +513,19 @@ export default function CatalogEditor() {
             ))}
           </div>
           <details className="reset-catalog">
+            <summary>Load published website collection</summary>
+            <p>
+              This replaces your local edits with the collection bundled in this
+              version. Export your changes first.
+            </p>
+            <button
+              className="secondary-button"
+              onClick={() => replace(defaultCatalog)}
+            >
+              Load published collection
+            </button>
+          </details>
+          <details className="reset-catalog">
             <summary>Restore sample boutique</summary>
             <p>
               Export your edits first. This replaces this browser’s catalog with
@@ -519,7 +533,7 @@ export default function CatalogEditor() {
             </p>
             <button
               className="secondary-button"
-              onClick={() => replace(defaultCatalog)}
+              onClick={() => replace(sampleCatalog)}
             >
               Restore samples
             </button>

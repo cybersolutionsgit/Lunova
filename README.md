@@ -17,7 +17,7 @@ Open **Customize** above the 3D view (or **Customize boutique** in the sidebar).
 
 **Editor changes are stored only in your current browser.** They do not update WordPress or other visitors. The editor is deliberately public and local, not a secure admin dashboard. A shared, authenticated editing system is a future phase. Use Export before clearing browser data or changing devices. Catalog saves validate data and report storage errors without overwriting the last valid catalog.
 
-The bundled products are original placeholder lingerie illustrations, explicitly marked as samples; they are not claimed to be listings from your website. Live access from the development environment was blocked by its network policy. WooCommerce import has been tested with fixtures, not against the live source. Import stock is **not authoritative**: unavailable items get a zero demo cap; otherwise a default cap of ten is used. Prices can become stale after import. No checkout is enabled.
+The published catalog now contains 21 real products from the owner-supplied WooCommerce public export, in PKR. The live public feed was also reached successfully and its 21 product IDs matched the supplied export. Featured images were downloaded without modification into `public/products/catalog/` (about 534 KiB total) to avoid external hotlink/CORS dependencies in 3D and make hosting migration easier. Each product retains its original image URL and website link. The original eight labelled sample illustrations remain available via Restore sample boutique; Load published website collection restores the real catalog. This is a snapshot, not automatic synchronization. The browser cross-origin importer is still dependent on the source CORS policy; its handling is tested with fixtures. Import stock is **not authoritative**: unavailable items get a zero demo cap; otherwise a default cap of ten is used. Prices can become stale after import. No checkout is enabled.
 
 ## Run in Codex Cloud / locally
 
@@ -43,7 +43,7 @@ npm run build
 npm run test:e2e
 ```
 
-Unit tests validate cart mutation, edited/deleted product reconciliation, fixture collisions, safe spawns, catalog validation, image/link protocols, duplicate display prevention, and paginated WooCommerce data conversion. Browser tests cover rendered 3D product selection, movement/collision, mobile controls, bag persistence, search, editor CRUD/persistence and import success/failure with mocked source responses. Live catalog access and real-device performance are separate, unverified checks.
+Unit tests validate the supplied catalog and cart mutation, edited/deleted product reconciliation, fixture collisions, safe spawns, catalog validation, image/link protocols, duplicate display prevention, and paginated WooCommerce data conversion. Browser tests cover rendered 3D product selection, movement/collision, mobile controls, bag persistence, search, editor CRUD/persistence and import success/failure with mocked source responses. The source feed and downloaded image files were checked; real-device performance and automatic source synchronization remain separate checks.
 
 Playwright uses `/usr/bin/chromium` when available. Set `PLAYWRIGHT_CHROMIUM_EXECUTABLE_PATH` to another installed executable, or run `npx playwright install chromium`. CI installs its browser/dependencies. Headless Linux uses software WebGL. The Three.js chunk is large (~250KB compressed); the 3D scene is lazy-loaded. Hardware and accessibility review are still needed before a commercial launch.
 

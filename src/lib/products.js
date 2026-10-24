@@ -18,3 +18,5 @@ export const currencyScale = (currency = "USD") =>
   10 **
   new Intl.NumberFormat("en", { style: "currency", currency }).resolvedOptions()
     .maximumFractionDigits;
+
+export { default as sampleCatalog } from "../data/sample-catalog.json" with { type: "json" };

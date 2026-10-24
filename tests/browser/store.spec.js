@@ -1,4 +1,14 @@
 import { test, expect } from "@playwright/test";
+import { sampleCatalog } from "../../src/lib/products.js";
+test.beforeEach(async ({ page }) => {
+  await page.addInitScript((catalog) => {
+    if (!localStorage.getItem("lunova-boutique-catalog-v1"))
+      localStorage.setItem(
+        "lunova-boutique-catalog-v1",
+        JSON.stringify(catalog),
+      );
+  }, sampleCatalog);
+});
 const openEditor = async (page) => {
   await page.getByRole("button", { name: "Customize", exact: true }).click();
   await expect(page.getByRole("dialog")).toBeVisible();

@@ -100,6 +100,7 @@ export function validateCatalog(input) {
       description: plainText(p.description).slice(0, 2000),
       color: /^#[0-9a-f]{6}$/i.test(p.color) ? p.color : "#8b5263",
       image,
+      ...(p.originalImage ? { originalImage: safeImage(p.originalImage) } : {}),
       stock: p.stock,
       display: p.display,
       presentation: p.presentation === "mannequin" ? "mannequin" : "photo",
@@ -128,11 +129,13 @@ export function guessCategory(product) {
   const text = [product.name, ...(product.categories || []).map((c) => c.name)]
     .join(" ")
     .toLowerCase();
-  if (/robe|gown|kimono|lounge/.test(text)) return "robes";
-  if (/sleep|night|pajama|pyjama|slip/.test(text)) return "sleepwear";
+  if (/robe|kimono|lounge/.test(text)) return "robes";
+  if (/sleep|night|pajama|pyjama|slip|chemise|babydoll/.test(text))
+    return "sleepwear";
   if (/set|bodysuit|teddy/.test(text)) return "sets";
+  if (/gown/.test(text)) return "sleepwear";
   if (/pant|brief|thong|underwear/.test(text)) return "underwear";
-  if (/bra|bralette/.test(text)) return "bras";
+  if (/bra|bralette|corset/.test(text)) return "bras";
   return "sets";
 }
 export function fromWooCommerce(rows) {
@@ -168,6 +171,7 @@ export function fromWooCommerce(rows) {
       description: plainText(p.short_description || p.description),
       color: "#8b5263",
       image,
+      ...(p.originalImage ? { originalImage: safeImage(p.originalImage) } : {}),
       stock: p.is_in_stock === false ? 0 : 10,
       display: i < 12 ? i : null,
       presentation: "photo",

@@ -1,13 +1,27 @@
 import test from "node:test";
 import assert from "node:assert/strict";
-import { sanitizeCart, setQuantity, cartTotals } from "../src/lib/cart.js";
+import {
+  sanitizeCart as sanitize,
+  setQuantity as quantity,
+  cartTotals as totals,
+} from "../src/lib/cart.js";
 import {
   canOccupy,
   movePlayer,
   aisleSpawns,
   displays,
 } from "../src/lib/world.js";
-import { products, categories, defaultCatalog } from "../src/lib/products.js";
+import {
+  categories,
+  defaultCatalog as publishedCatalog,
+  sampleCatalog as defaultCatalog,
+} from "../src/lib/products.js";
+const products = defaultCatalog.products;
+const sanitizeCart = (items, catalog = products) => sanitize(items, catalog);
+const setQuantity = (items, id, q, catalog = products) =>
+  quantity(items, id, q, catalog);
+const cartTotals = (items, catalog = products, currency = "USD") =>
+  totals(items, catalog, currency);
 import {
   validateCatalog,
   fromWooCommerce,
@@ -181,5 +195,22 @@ test("catalog prices and demo totals respect currency decimal precision", () => 
   assert.equal(
     cartTotals({ "woo-10": 2 }, yen.products, yen.currency).subtotal,
     24690,
+  );
+});
+
+test("published catalog uses the supplied 21 real PKR products and featured image URLs", () => {
+  assert.equal(publishedCatalog.products.length, 21);
+  assert.equal(publishedCatalog.currency, "PKR");
+  assert.equal(publishedCatalog.source, "woocommerce");
+  assert.deepEqual(validateCatalog(publishedCatalog), publishedCatalog);
+  for (const p of publishedCatalog.products) {
+    assert.ok(p.id.startsWith("woo-"));
+    assert.ok(p.image.startsWith("/products/catalog/"));
+    assert.ok(p.originalImage.startsWith("https://lunovasecrets.com/"));
+    assert.ok(p.sourceUrl.startsWith("https://lunovasecrets.com/"));
+  }
+  assert.equal(
+    publishedCatalog.products.filter((p) => p.display !== null).length,
+    12,
   );
 });
