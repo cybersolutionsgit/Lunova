@@ -239,3 +239,45 @@ test("login rejects malformed bodies and password rotation revokes existing sess
   );
   assert.equal(response.status, 401);
 });
+
+test("model generation is admin-only and rejects cross-site requests without calling the provider", async () => {
+  assert.equal((await request("/api/admin/models/status")).status, 401);
+  assert.equal(
+    (
+      await request("/api/admin/models/generate", {
+        method: "POST",
+        body: JSON.stringify({ image: "test" }),
+      })
+    ).status,
+    401,
+  );
+  const login = await request("/api/admin/login", {
+    method: "POST",
+    body: JSON.stringify({ username, password }),
+  });
+  const current = login.headers.get("set-cookie").split(";")[0];
+  assert.equal(
+    (
+      await request("/api/admin/models/generate", {
+        method: "POST",
+        headers: { Cookie: current, Origin: "https://attacker.test" },
+        body: JSON.stringify({ image: "test" }),
+      })
+    ).status,
+    403,
+  );
+  assert.equal(
+    (
+      await request("/api/admin/models/generate", {
+        method: "POST",
+        headers: { Cookie: current },
+        body: JSON.stringify({ image: "not-an-image" }),
+      })
+    ).status,
+    400,
+  );
+  assert.equal(
+    (await request("/api/models/" + "a".repeat(64) + ".glb")).status,
+    404,
+  );
+});

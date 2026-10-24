@@ -3233,3 +3233,29 @@ fieldset.editor-content:disabled {
   transform: translate(-50%, -50%);
   pointer-events: none;
 }
+
+.model-editor-section {
+  padding: 16px;
+  border: 1px solid #dfc6cf;
+  border-radius: 12px;
+  background: var(--shop-surface);
+}
+.model-editor-section h3 {
+  margin: 0 0 8px;
+}
+.model-editor-section p {
+  font-size: 12px;
+  line-height: 1.6;
+}
+.model-editor-section .model-auto-option {
+  display: flex;
+  align-items: flex-start;
+  gap: 10px;
+  margin: 14px 0;
+}
+.model-auto-option input[type="checkbox"] {
+  width: 18px;
+  height: 18px;
+  flex: 0 0 18px;
+  margin: 2px 0 0;
+}

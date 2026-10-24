@@ -23,3 +23,7 @@ Only after explicit owner approval: sizes/variants, real stock management, authe
 ## Optional — payments
 
 Separate approval and account access required. Use server-created payment sessions, signature-verified webhooks and idempotency. Never store card data or expose secret keys in frontend configuration.
+
+## Implemented for review — hosted photo-to-3D integration
+
+An admin-only TripoSR/Hugging Face connector, per-product automatic photo conversion, sequential missing-model batch, bounded D1 GLB storage and display-case rendering are implemented. Original-photo/procedural fallbacks remain. Provider fixtures and synthetic GLBs validate software behavior, not actual AI results. The development proxy blocks Hugging Face; an owner free account/token, current compatible hosted Space and a real successful conversion are still needed before calling this active. See IMAGE_TO_3D.md. Do not assume a free demo is an unlimited or always-available production API.

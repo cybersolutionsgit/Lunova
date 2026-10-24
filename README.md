@@ -66,3 +66,9 @@ For a hosting move, export D1 and the catalog, copy the frontend build and photo
 The bundled real product snapshot retains `originalImage` and source product URLs; photos were copied unchanged at the owner's request. It is not continuously synced to WooCommerce. The original eight labelled samples are retained as an explicit admin replacement option. Quantity limits are for the demo, not authoritative inventory. All VITE_* variables are public; never put credentials there.
 
 See [AGENTS.md](AGENTS.md) for architecture, [docs/ROADMAP.md](docs/ROADMAP.md) for milestones, and [docs/CMS_SETUP.md](docs/CMS_SETUP.md) for setup/troubleshooting.
+
+## Hosted photo-to-3D models
+
+Admin products now support a free hosted TripoSR connector: generate one model, opt a product into automatic generation on photo changes, or run **Generate missing 3D models** sequentially. Successful GLBs are saved in the existing D1 database and displayed in cases in full graphics; photos remain the fallback. No personal computer/GPU or paid API is connected. Free provider quotas/availability apply, and reconstruction is approximate.
+
+**Live AI conversion is not verified:** this development environment's network proxy blocks Hugging Face. The integration is tested with synthetic models and provider fixtures. A real provider service check/conversion is still required. An owner-supplied server-only `HF_TOKEN` may be needed for free account access. See [docs/IMAGE_TO_3D.md](docs/IMAGE_TO_3D.md) for exact account steps, supported API, limits, activation and migration.

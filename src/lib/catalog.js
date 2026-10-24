@@ -107,6 +107,14 @@ export function validateCatalog(input) {
       presentation: p.presentation === "mannequin" ? "mannequin" : "photo",
       tag: plainText(p.tag).slice(0, 40),
       sourceUrl: safeLink(p.sourceUrl),
+      ...(p.autoModel === true ? { autoModel: true } : {}),
+      ...(p.modelUrl && /^\/api\/models\/[a-f0-9]{64}\.glb$/.test(p.modelUrl)
+        ? { modelUrl: p.modelUrl }
+        : {}),
+      ...(typeof p.modelImageHash === "string" &&
+      /^[a-f0-9]{64}$/.test(p.modelImageHash)
+        ? { modelImageHash: p.modelImageHash }
+        : {}),
     };
   });
   const result = {

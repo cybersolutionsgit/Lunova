@@ -24,6 +24,8 @@ import {
 } from "../lib/catalog";
 import { getCollections } from "../lib/shop";
 import ProductArt from "./ProductArt";
+import { api } from "../lib/api";
+import { generateProductModel, imageHash } from "../lib/models";
 const blank = () => ({
   id: crypto.randomUUID(),
   name: "",
@@ -38,6 +40,7 @@ const blank = () => ({
   presentation: "photo",
   tag: "YOUR COLLECTION",
   sourceUrl: "",
+  autoModel: false,
 });
 async function compressImage(file) {
   if (
@@ -66,7 +69,9 @@ export default function CatalogEditor() {
     [busy, setBusy] = useState(false),
     [confirm, setConfirm] = useState(null),
     [pending, setPending] = useState(null),
-    [currency, setCurrency] = useState(catalog.currency);
+    [currency, setCurrency] = useState(catalog.currency),
+    [modelStatus, setModelStatus] = useState(""),
+    [modelProgress, setModelProgress] = useState("");
   const fileRef = useRef();
   const controller = useRef();
   useEffect(() => () => controller.current?.abort(), []);
@@ -143,19 +148,133 @@ export default function CatalogEditor() {
     setTimeout(() => URL.revokeObjectURL(url), 1000);
     notify("Catalog exported. Keep this file as your backup.");
   }
+  async function checkModelService() {
+    setBusy(true);
+    try {
+      const result = await api("/api/admin/models/status");
+      setModelStatus(
+        result.ready
+          ? "Free service is reachable. Generation uses the provider’s daily GPU quota; availability is not guaranteed."
+          : "The free service is not ready.",
+      );
+    } catch (e) {
+      setModelStatus(e.message);
+    } finally {
+      setBusy(false);
+    }
+  }
+  async function makeModel() {
+    setBusy(true);
+    setError("");
+    setModelProgress(
+      "Generating 3D model using the free hosted service… Keep this panel open. This can take a few minutes.",
+    );
+    controller.current?.abort();
+    controller.current = new AbortController();
+    try {
+      const generated = await generateProductModel(
+        draft.image,
+        controller.current.signal,
+      );
+      setDraft((d) => ({ ...d, ...generated }));
+      setModelProgress(
+        "Model saved. Publish this product to show it in its display case.",
+      );
+      return generated;
+    } catch (e) {
+      setModelProgress("");
+      throw e;
+    } finally {
+      setBusy(false);
+    }
+  }
+  async function generateMissingModels() {
+    setBusy(true);
+    setError("");
+    controller.current?.abort();
+    controller.current = new AbortController();
+    let products = [...catalog.products],
+      completed = 0;
+    try {
+      await api("/api/admin/models/status", {
+        signal: controller.current.signal,
+      });
+      for (let index = 0; index < products.length; index++) {
+        const product = products[index];
+        if (
+          product.modelUrl &&
+          product.modelImageHash === (await imageHash(product.image))
+        )
+          continue;
+        setModelProgress(
+          `Generating ${index + 1} of ${products.length}: ${product.name}. Keep this panel open. Free quotas may stop the batch.`,
+        );
+        const model = await generateProductModel(
+          product.image,
+          controller.current.signal,
+        );
+        products[index] = { ...product, ...model, autoModel: true };
+        await catalog.replace({ ...catalog, products });
+        completed++;
+      }
+      setModelProgress(
+        `Finished: ${completed} new models published. Existing models were reused.`,
+      );
+    } catch (e) {
+      if (e.name !== "AbortError")
+        setError(`${completed} models published before stopping. ` + e.message);
+      setModelProgress("");
+    } finally {
+      setBusy(false);
+    }
+  }
   async function save(e) {
     e.preventDefault();
-    const next = {
+    let product = { ...draft },
+      warning = "";
+    // Validate ordinary fields before spending a free generation slot.
+    const withProduct = (p) => ({
       ...catalog,
       source: catalog.source === "sample" ? "custom" : catalog.source,
-      products: catalog.products.some((p) => p.id === draft.id)
-        ? catalog.products.map((p) => (p.id === draft.id ? draft : p))
-        : [...catalog.products, draft],
-    };
-    if (await replace(next)) setDraft(null);
+      products: catalog.products.some((row) => row.id === p.id)
+        ? catalog.products.map((row) => (row.id === p.id ? p : row))
+        : [...catalog.products, p],
+    });
+    try {
+      validateCatalog(withProduct(product));
+    } catch (e) {
+      report(e);
+      return;
+    }
+    if (
+      product.autoModel &&
+      (!product.modelUrl ||
+        product.modelImageHash !== (await imageHash(product.image)))
+    ) {
+      try {
+        product = { ...product, ...(await makeModel()) };
+      } catch (e) {
+        if (e.name === "AbortError") return;
+        warning =
+          "Product photo published, but its 3D model could not be generated: " +
+          e.message;
+      }
+    }
+    if (await replace(withProduct(product))) {
+      setDraft(null);
+      setModelProgress("");
+      if (warning) setError(warning);
+    }
   }
   function field(key, value) {
-    setDraft((d) => ({ ...d, [key]: value }));
+    setDraft((d) => ({
+      ...d,
+      [key]: value,
+      ...(key === "image"
+        ? { modelUrl: undefined, modelImageHash: undefined }
+        : {}),
+    }));
+    if (key === "image") setModelProgress("");
   }
   return (
     <fieldset disabled={busy} className="editor-content" aria-busy={busy}>
@@ -167,6 +286,8 @@ export default function CatalogEditor() {
           orders remain disabled.
         </p>
       </div>
+      {!draft && modelStatus && <p role="status">{modelStatus}</p>}
+      {!draft && modelProgress && <p role="status">{modelProgress}</p>}
       {error && (
         <p className="editor-error" role="alert">
           {error}
@@ -350,6 +471,67 @@ export default function CatalogEditor() {
               />
             </label>
           </div>
+          <section
+            className="model-editor-section"
+            aria-label="Automatic 3D models"
+          >
+            <h3>Photo to 3D · free hosted service</h3>
+            <p>
+              No computer or GPU connection is needed. Your photo is sent to a
+              Hugging Face TripoSR Space. Free daily limits and queues apply. AI
+              may recreate the photographed person and guess hidden details; the
+              original photo stays visible.
+            </p>
+            <label className="model-auto-option">
+              <input
+                type="checkbox"
+                checked={draft.autoModel === true}
+                onChange={(e) => field("autoModel", e.target.checked)}
+              />
+              Automatically generate a 3D model when publishing a new or changed
+              photo
+            </label>
+            <div className="editor-actions">
+              <button
+                type="button"
+                className="secondary-button"
+                onClick={checkModelService}
+              >
+                Check free service
+              </button>
+              <button
+                type="button"
+                className="secondary-button"
+                onClick={() => makeModel().catch(report)}
+              >
+                Generate model from this photo
+              </button>
+              {draft.modelUrl && (
+                <button
+                  type="button"
+                  className="secondary-button"
+                  onClick={() =>
+                    setDraft((d) => ({
+                      ...d,
+                      modelUrl: undefined,
+                      modelImageHash: undefined,
+                      autoModel: false,
+                    }))
+                  }
+                >
+                  Use photo and standard mannequin
+                </button>
+              )}
+            </div>
+            {draft.modelUrl && (
+              <p>
+                3D model saved for this product. Publish to apply it to the
+                case. Lightweight graphics use the photo and standard display.
+              </p>
+            )}
+            {modelStatus && <p role="status">{modelStatus}</p>}
+            {modelProgress && <p role="status">{modelProgress}</p>}
+          </section>
           <button className="primary-button" type="submit" disabled={busy}>
             <Save size={16} />
             Publish product
@@ -383,6 +565,15 @@ export default function CatalogEditor() {
             >
               <Upload size={15} />
               Import file
+            </button>
+            <button
+              className="secondary-button"
+              onClick={generateMissingModels}
+            >
+              Generate missing 3D models
+            </button>
+            <button className="secondary-button" onClick={checkModelService}>
+              Check free 3D service
             </button>
             <button className="secondary-button" onClick={exportFile}>
               <Download size={15} />
