@@ -9,9 +9,6 @@ import {
 import {
   ArrowUpRight,
   ArrowRight,
-  ArrowLeft,
-  ArrowUp,
-  ArrowDown,
   ShoppingBag,
   Search,
   Leaf,
@@ -21,10 +18,8 @@ import {
   Layers,
   Moon,
   Shirt,
-  Settings2,
   ShieldCheck,
   Package,
-  MapPin,
   SlidersHorizontal,
   Maximize,
   Minimize,
@@ -36,7 +31,6 @@ import {
   Check,
   Compass,
   PanelLeftOpen,
-  Move,
   Map,
   VolumeX,
   Info,
@@ -96,7 +90,6 @@ export default function App() {
     [fullscreen, setFullscreen] = useState(false),
     [sidebarOpen, setSidebarOpen] = useState(false),
     [toolsOpen, setToolsOpen] = useState(false),
-    [movementOpen, setMovementOpen] = useState(false),
     [mapOpen, setMapOpen] = useState(false);
   const setModal = useCallback(
     (value) => {
@@ -178,7 +171,7 @@ export default function App() {
       await canvas.requestPointerLock?.();
     } catch {
       notify(
-        "Move the mouse over the store to look around, or drag on touch screens.",
+        "Mouse capture is unavailable. You can browse products using Product view, or drag to look on touch screens.",
       );
     }
   }
@@ -258,9 +251,18 @@ export default function App() {
           </svg>
           <small>ENTRANCE</small>
         </div>
+        {!locked &&
+          !sidebarOpen &&
+          !toolsOpen &&
+          !selected &&
+          !modal &&
+          view === "explore" && (
+            <button className="resume-look" onClick={immersive}>
+              Click to look around
+            </button>
+          )}
         <TouchJoystick
           active={
-            movementOpen &&
             !sidebarOpen &&
             !toolsOpen &&
             !selected &&
@@ -279,15 +281,6 @@ export default function App() {
           }}
         >
           <SlidersHorizontal size={20} />
-        </button>
-        <button
-          className="movement-toggle"
-          aria-label="Movement controls"
-          aria-expanded={movementOpen}
-          aria-controls="movement-pad"
-          onClick={() => setMovementOpen((v) => !v)}
-        >
-          {movementOpen ? <X size={20} /> : <Move size={20} />}
         </button>
         {toolsOpen && (
           <div
@@ -730,9 +723,9 @@ export default function App() {
                 <section>
                   <h3>Wander at your own pace</h3>
                   <p>
-                    Use W A S D or the arrow keys to walk. On touch screens, tap
-                    the movement button at the bottom right to open the thumb
-                    joystick. Drag it to walk and release to stop.
+                    Use W A S D or the arrow keys to walk. On touch screens,
+                    touch and drag the lower-right area to walk. The joystick
+                    appears while held and hides when released.
                   </p>
                 </section>
               </div>
@@ -741,11 +734,12 @@ export default function App() {
                 <section>
                   <h3>Look around. Find a favorite.</h3>
                   <p>
-                    Move your mouse over the store to look around without
-                    clicking. Hold a mouse button to pause looking; release to
-                    resume. On touch screens, drag to look. Click a product
-                    photo or mannequin to see its details. Optional mouse
-                    capture lets you turn continuously; press Esc to release it.
+                    Click “Click to look around” to keep your cursor centred
+                    while looking. Press Esc to release it for menus. Hold a
+                    mouse button to pause looking; release to resume. On touch
+                    screens, drag to look. Click a product photo or mannequin to
+                    see its details. Optional mouse capture lets you turn
+                    continuously; press Esc to release it.
                   </p>
                 </section>
               </div>

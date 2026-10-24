@@ -53,40 +53,62 @@ test("3D fills the screen and the sidebar overlays it without replacing the canv
     true,
   );
 });
-test("hovering turns the camera without a mouse button and UI panels pause controls", async ({
+test("desktop look stays centred, menus release capture and returning resumes without drift", async ({
   page,
 }) => {
   await page.goto("/");
   const canvas = page.getByTestId("store-canvas");
   await expect(canvas).toHaveAttribute("data-look-yaw", "0");
   await page.mouse.move(550, 420);
-  await page.mouse.move(700, 440, { steps: 5 });
+  await page.mouse.move(700, 440);
+  expect(await canvas.getAttribute("data-look-yaw")).toBe("0");
+  await page
+    .getByRole("button", { name: "Click to look around", exact: true })
+    .click();
+  await expect
+    .poll(() => page.evaluate(() => !!document.pointerLockElement))
+    .toBe(true);
+  await page.mouse.move(800, 450, { steps: 5 });
   await expect
     .poll(async () =>
       Math.abs(Number(await canvas.getAttribute("data-look-yaw"))),
     )
     .toBeGreaterThan(0.1);
+  await canvas.evaluate(() => document.exitPointerLock());
+  await expect
+    .poll(() => page.evaluate(() => !!document.pointerLockElement))
+    .toBe(false);
   await page
     .getByRole("button", { name: "Store controls", exact: true })
     .click();
-  await page.getByRole("button", { name: "Graphics settings" }).click();
+  await page
+    .getByRole("button", { name: "Graphics settings", exact: true })
+    .click();
   const yaw = await canvas.getAttribute("data-look-yaw");
-  const pos = await page.getByTestId("player-marker").getAttribute("data-z");
-  await page.mouse.move(550, 370);
-  await page.mouse.move(820, 450, { steps: 5 });
-  await page.keyboard.down("KeyW");
-  await page.waitForTimeout(400);
-  await page.keyboard.up("KeyW");
+  await page.mouse.move(500, 370);
+  await page.getByRole("button", { name: "Close dialog", exact: true }).click();
+  await page.mouse.move(820, 450);
+  await page.waitForTimeout(200);
   expect(await canvas.getAttribute("data-look-yaw")).toBe(yaw);
-  expect(await page.getByTestId("player-marker").getAttribute("data-z")).toBe(
-    pos,
-  );
-  await page.getByRole("button", { name: "Close dialog" }).click();
-  await page.mouse.move(550, 420);
-  await page.mouse.move(650, 430, { steps: 4 });
+  await page
+    .getByRole("button", { name: "Click to look around", exact: true })
+    .click();
   await expect
-    .poll(async () => await canvas.getAttribute("data-look-yaw"))
-    .not.toBe(yaw);
+    .poll(() => page.evaluate(() => !!document.pointerLockElement))
+    .toBe(true);
+  // Pointer-lock input is relative, independent of the menu cursor position.
+  await canvas.dispatchEvent("pointermove", {
+    pointerType: "mouse",
+    buttons: 0,
+    movementX: 10,
+    movementY: 0,
+  });
+  await expect
+    .poll(async () => Number(await canvas.getAttribute("data-look-yaw")))
+    .not.toBe(Number(yaw));
+  expect(
+    Math.abs(Number(await canvas.getAttribute("data-look-yaw")) - Number(yaw)),
+  ).toBeLessThan(0.1);
 });
 test("product popups remain inside browser full screen", async ({ page }) => {
   await page.goto("/");
@@ -169,25 +191,11 @@ test("mobile view is clear by default and important controls expand only when re
     ),
   ).toHaveCount(0);
   await expect(page.locator(".minimap")).toBeHidden();
-  await expect(
-    page.getByRole("button", { name: "Movement joystick", exact: true }),
-  ).toHaveCount(0);
+  await expect(page.getByTestId("touch-joystick")).toHaveCount(0);
   await expect(
     page.getByRole("button", { name: "Movement controls", exact: true }),
-  ).toHaveAttribute("aria-expanded", "false");
-  const before = await canvas.boundingBox();
-  await page
-    .getByRole("button", { name: "Movement controls", exact: true })
-    .click();
-  await expect(
-    page.getByRole("button", { name: "Movement joystick", exact: true }),
-  ).toBeVisible();
-  await page
-    .getByRole("button", { name: "Movement controls", exact: true })
-    .click();
-  await expect(
-    page.getByRole("button", { name: "Movement joystick", exact: true }),
   ).toHaveCount(0);
+  const before = await canvas.boundingBox();
   await page
     .getByRole("button", { name: "Store controls", exact: true })
     .click();
@@ -210,8 +218,18 @@ test("holding a mouse button pauses look and release resumes without a jump", as
   await page.goto("/");
   const canvas = page.getByTestId("store-canvas");
   await expect(canvas).toHaveAttribute("data-look-yaw", "0");
-  await page.mouse.move(500, 650);
-  await page.mouse.move(550, 650);
+  await page
+    .getByRole("button", { name: "Click to look around", exact: true })
+    .click();
+  await expect
+    .poll(() => page.evaluate(() => !!document.pointerLockElement))
+    .toBe(true);
+  await canvas.dispatchEvent("pointermove", {
+    pointerType: "mouse",
+    buttons: 0,
+    movementX: 150,
+    movementY: -200,
+  });
   await expect
     .poll(async () => Number(await canvas.getAttribute("data-look-yaw")))
     .toBeLessThan(-0.1);
@@ -221,7 +239,12 @@ test("holding a mouse button pauses look and release resumes without a jump", as
   await page.waitForTimeout(200);
   expect(await canvas.getAttribute("data-look-yaw")).toBe(yaw);
   await page.mouse.up();
-  await page.mouse.move(810, 680);
+  await canvas.dispatchEvent("pointermove", {
+    pointerType: "mouse",
+    buttons: 0,
+    movementX: 10,
+    movementY: 0,
+  });
   await expect
     .poll(async () => Number(await canvas.getAttribute("data-look-yaw")))
     .toBeLessThan(Number(yaw));
@@ -243,11 +266,8 @@ test("touch joystick walks, keeps camera steady and stops on release or collapse
   const marker = page.getByTestId("player-marker");
   const canvas = page.getByTestId("store-canvas");
   await expect(marker).toHaveAttribute("data-z", "9.00");
-  await page
-    .getByRole("button", { name: "Movement controls", exact: true })
-    .click();
   const box = await page
-    .getByRole("button", { name: "Movement joystick", exact: true })
+    .getByRole("button", { name: "Touch movement area", exact: true })
     .boundingBox();
   const session = await context.newCDPSession(page);
   const x = box.x + box.width / 2,
@@ -272,11 +292,45 @@ test("touch joystick walks, keeps camera steady and stops on release or collapse
   const stopped = await marker.getAttribute("data-z");
   await page.waitForTimeout(250);
   expect(await marker.getAttribute("data-z")).toBe(stopped);
-  await page
-    .getByRole("button", { name: "Movement controls", exact: true })
-    .click();
-  await expect(
-    page.getByRole("button", { name: "Movement joystick", exact: true }),
-  ).toHaveCount(0);
+  await expect(page.getByTestId("touch-joystick")).toHaveCount(0);
+  // Cancellation also hides the transient control and clears movement.
+  await session.send("Input.dispatchTouchEvent", {
+    type: "touchStart",
+    touchPoints: [{ x, y }],
+  });
+  await expect(page.getByTestId("touch-joystick")).toBeVisible();
+  await session.send("Input.dispatchTouchEvent", {
+    type: "touchCancel",
+    touchPoints: [],
+  });
+  await expect(page.getByTestId("touch-joystick")).toHaveCount(0);
   await context.close();
+});
+
+test("captured centre click opens a product and releases the mouse for its popup", async ({
+  page,
+}) => {
+  await page.goto("/");
+  await expect(page.getByTestId("player-marker")).toHaveAttribute(
+    "data-z",
+    "9.00",
+  );
+  await page
+    .getByRole("button", { name: "Click to look around", exact: true })
+    .click();
+  await expect
+    .poll(() => page.evaluate(() => !!document.pointerLockElement))
+    .toBe(true);
+  await page.mouse.down();
+  await page.mouse.up();
+  await expect(
+    page.getByRole("dialog", { name: "A closer look" }),
+  ).toBeVisible();
+  await expect
+    .poll(() => page.evaluate(() => !!document.pointerLockElement))
+    .toBe(false);
+  await page.getByRole("button", { name: "Close dialog", exact: true }).click();
+  await expect(
+    page.getByRole("button", { name: "Click to look around", exact: true }),
+  ).toBeVisible();
 });
