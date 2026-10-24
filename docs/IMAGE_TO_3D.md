@@ -54,3 +54,13 @@ npm run build:functions:pages
 Node tests cover Gradio request sequence, upload, SSE boundaries, quota failures, cross-host rejection, GLB limits, actual D1 persistence/cache/locking, catalog sanitization, session checks and cross-origin denial. Browser fixture tests cover automatic generation/publishing, render fetching, unchanged-image reuse, quota fallback and batch stop. These do **not** establish a successful live AI conversion.
 
 Sources: [TripoSR repository and MIT license](https://github.com/VAST-AI-Research/TripoSR), [upstream Gradio implementation](https://github.com/VAST-AI-Research/TripoSR/blob/main/gradio_app.py), [Hugging Face ZeroGPU documentation source](https://github.com/huggingface/hub-docs/blob/main/docs/hub/spaces-zerogpu.md).
+
+## Diagnosing a failed service check
+
+The owner reported that the default public `stabilityai/TripoSR` demo fails during startup while installing `torchmcubes`: `scikit-build-core version 0.12.2 is too old. Minimum required version is 1.0`. That is a dependency failure in the third-party Space, before its API starts. Changing the website token or product photo cannot repair that Space; its owner must fix it, or a compatible running Space must be selected. No alternate Space has yet been verified from this workspace. Do not change the provider address based solely on a guessed demo name.
+
+Connection handling follows bounded redirects only within the same HTTPS host, never forwards the token to a foreign redirect, trims surrounding token whitespace, and tries legacy API metadata when an unknown modern route serves HTML. Status failures distinguish connection/timeouts, HTTP access denial, non-JSON startup pages and unsupported APIs. The authenticated Admin check also reports whether this deployment has a non-empty server token, without returning it. These fixes improve compatibility and diagnosis; they do not repair a broken upstream installation or establish a successful conversion.
+
+### Current free-hosting limits
+
+The checked official [Spaces overview](https://github.com/huggingface/hub-docs/blob/main/docs/hub/spaces-overview.md) states that creating Gradio/Docker compute Spaces requires a paid plan, despite CPU Basic having no hourly charge. Free personal accounts in good standing can host eligible ZeroGPU Spaces; the ZeroGPU documentation requires a verified account older than 30 days. Therefore a newly created free account cannot be promised an immediate free CPU/ZeroGPU replacement. The attempted `hysts/TripoSR` alternative was reported as 404 by the owner. No working alternative hosted service has been verified. Preserve the no-paid-fallback requirement and do not claim changing HF_TOKEN repairs the original demo's dependency failure.

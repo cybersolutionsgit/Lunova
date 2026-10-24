@@ -3,14 +3,24 @@ export const MAX_MODEL_BYTES = 4 * 1024 * 1024;
 const MAX_STORAGE = 64 * 1024 * 1024;
 const CHUNK = 192 * 1024;
 export class ModelError extends Error {
-  constructor(message, status = 502) {
+  constructor(message, status = 502, code = "model_service_error") {
     super(message);
     this.status = status;
+    this.code = code;
   }
 }
 export function providerOrigin(env) {
   const value = env.HF_SPACE_URL || "https://stabilityai-triposr.hf.space";
-  const url = new URL(value);
+  let url;
+  try {
+    url = new URL(value);
+  } catch {
+    throw new ModelError(
+      "HF_SPACE_URL is invalid. Use the HTTPS address of a compatible Hugging Face Space.",
+      503,
+      "provider_configuration",
+    );
+  }
   if (
     url.protocol !== "https:" ||
     !/^[a-z0-9-]+\.hf\.space$/.test(url.hostname) ||
@@ -28,22 +38,31 @@ export function providerOrigin(env) {
   return url.origin;
 }
 function auth(env) {
-  return env.HF_TOKEN ? { Authorization: `Bearer ${env.HF_TOKEN}` } : {};
+  const token = String(env.HF_TOKEN || "").trim();
+  if (/[\r\n]/.test(token))
+    throw new ModelError(
+      "HF_TOKEN contains a line break. Save only the token value in Cloudflare, without quotes or extra text.",
+      503,
+      "token_configuration",
+    );
+  return token ? { Authorization: `Bearer ${token}` } : {};
 }
 async function limited(response, max) {
   if (!response.ok) {
     if (response.status === 429)
       throw new ModelError(
-        "The free GPU quota or queue limit was reached. Try later; no paid fallback is used.",
+        "The free GPU quota or queue limit was reached (HTTP 429). Try later; no paid fallback is used.",
         429,
+        "provider_quota",
       );
     if ([401, 403].includes(response.status))
       throw new ModelError(
-        "The hosted service requires access. Add your Hugging Face token as the server-only HF_TOKEN secret, or check Space access.",
+        `Hugging Face denied API access (HTTP ${response.status}). Check the HF_TOKEN server secret and your account access to this Space.`,
         503,
+        "provider_access",
       );
     throw new ModelError(
-      "The free 3D service is unavailable or its API changed. Your photo stays available.",
+      `The free 3D service returned HTTP ${response.status}. Open the Space page to check whether it is running; your photo stays available.`,
     );
   }
   if (Number(response.headers.get("Content-Length")) > max)
@@ -70,34 +89,127 @@ async function limited(response, max) {
   return bytes;
 }
 async function request(url, env, options = {}, fetcher = fetch) {
-  return fetcher(url, {
-    ...options,
-    redirect: "error",
-    headers: { ...auth(env), ...options.headers },
-    signal: options.signal || AbortSignal.timeout(20000),
-  });
+  const headers = { ...auth(env), ...options.headers };
+  const signal = options.signal || AbortSignal.timeout(20000);
+  const initial = new URL(url);
+  let target = initial;
+  for (let hop = 0; hop < 4; hop++) {
+    let response;
+    try {
+      response = await fetcher(target.href, {
+        ...options,
+        redirect: "manual",
+        headers,
+        signal,
+      });
+    } catch (error) {
+      if (error instanceof ModelError) throw error;
+      const timeout =
+        signal.aborted || ["TimeoutError", "AbortError"].includes(error?.name);
+      throw new ModelError(
+        timeout
+          ? `The hosted service timed out while requesting ${initial.pathname} on ${initial.hostname}. The Space may be waking up; open its demo page and check its status.`
+          : `No HTTP response from ${initial.hostname} while requesting ${initial.pathname}. The server could not connect; check whether the Space is running.`,
+        503,
+        timeout ? "provider_timeout" : "provider_network",
+      );
+    }
+    if (![301, 302, 303, 307, 308].includes(response.status)) return response;
+    const location = response.headers.get("Location");
+    let next;
+    try {
+      next = new URL(location, target);
+    } catch {
+      throw new ModelError(
+        "The hosted service returned an invalid redirect.",
+        502,
+        "provider_redirect",
+      );
+    }
+    if (
+      !location ||
+      next.origin !== initial.origin ||
+      next.username ||
+      next.password
+    )
+      throw new ModelError(
+        "The service redirected outside its configured host. Access was stopped to protect your token. Check the Space URL and its sign-in status.",
+        503,
+        "provider_redirect",
+      );
+    if (
+      !["GET", "HEAD"].includes(options.method || "GET") &&
+      ![307, 308].includes(response.status)
+    )
+      throw new ModelError(
+        "The hosted API redirected a submission unexpectedly. No automatic retry was made.",
+        503,
+        "provider_redirect",
+      );
+    await response.body?.cancel();
+    target = next;
+  }
+  throw new ModelError(
+    "The hosted service redirected too many times. Check the Space address.",
+    503,
+    "provider_redirect",
+  );
+}
+async function jsonResult(response, max, stage) {
+  const bytes = await limited(response, max);
+  try {
+    return JSON.parse(new TextDecoder().decode(bytes));
+  } catch {
+    throw new ModelError(
+      `The service returned a web page or invalid JSON instead of ${stage}. The Space may be sleeping, starting, or using a different API.`,
+      503,
+      "provider_not_json",
+    );
+  }
 }
 export async function providerInfo(env, fetcher = fetch) {
   const origin = providerOrigin(env);
+  let invalidResponse;
   for (const base of ["/gradio_api", ""]) {
     const response = await request(origin + base + "/info", env, {}, fetcher);
-    if (response.status === 404) continue;
-    const info = JSON.parse(
-      new TextDecoder().decode(await limited(response, 500000)),
-    );
-    const endpoints = info.named_endpoints;
-    if (!endpoints?.["/generate"] || !endpoints?.["/preprocess"])
+    if ([404, 405].includes(response.status)) continue;
+    let info;
+    try {
+      info = await jsonResult(response, 500000, "the API description");
+    } catch (error) {
+      // A legacy Space can return its HTML shell for unknown modern paths.
+      if (base && error.code === "provider_not_json") {
+        invalidResponse = error;
+        continue;
+      }
+      throw error;
+    }
+    const endpoints = info?.named_endpoints;
+    if (!endpoints?.["/generate"] || !endpoints?.["/preprocess"]) {
+      if (base) {
+        invalidResponse = new ModelError(
+          "The modern API path did not expose TripoSR endpoints.",
+          503,
+          "provider_api",
+        );
+        continue;
+      }
       throw new ModelError(
         "This Space does not expose the TripoSR preprocess/generate API. Choose a compatible Space; no conversion was started.",
         503,
+        "provider_api",
       );
+    }
     return { origin, base };
   }
+  if (invalidResponse) throw invalidResponse;
   throw new ModelError(
-    "The hosted Space does not expose a supported Gradio API.",
+    "Neither /gradio_api/info nor /info exposed a supported API. Open the TripoSR Space to check whether it is running or its API changed.",
     503,
+    "provider_api",
   );
 }
+
 export async function sseResult(response) {
   if (!response.ok) await limited(response, 500000);
   const reader = response.body.getReader(),
@@ -191,8 +303,10 @@ async function call(api, data, provider, env, signal, fetcher) {
       { signal },
       fetcher,
     );
-    const configuration = JSON.parse(
-      new TextDecoder().decode(await limited(config, 500000)),
+    const configuration = await jsonResult(
+      config,
+      500000,
+      "the legacy API configuration",
     );
     const dependencies = configuration.dependencies || [];
     const index = dependencies.findIndex((row) => row.api_name === api);
@@ -218,9 +332,7 @@ async function call(api, data, provider, env, signal, fetcher) {
       },
       fetcher,
     );
-    const accepted = JSON.parse(
-      new TextDecoder().decode(await limited(joined, 100000)),
-    );
+    const accepted = await jsonResult(joined, 100000, "a queue receipt");
     if (!accepted.event_id)
       throw new ModelError("The service did not accept the conversion job.");
     return sseResult(
@@ -232,9 +344,7 @@ async function call(api, data, provider, env, signal, fetcher) {
       ),
     );
   }
-  const started = JSON.parse(
-    new TextDecoder().decode(await limited(response, 100000)),
-  );
+  const started = await jsonResult(response, 100000, "a generation receipt");
   if (!/^[a-zA-Z0-9_-]{1,128}$/.test(started.event_id || ""))
     throw new ModelError("The service did not accept the conversion job.");
   return sseResult(

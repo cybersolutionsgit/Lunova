@@ -154,11 +154,18 @@ export default function CatalogEditor() {
       const result = await api("/api/admin/models/status");
       setModelStatus(
         result.ready
-          ? "Free service is reachable. Generation uses the provider’s daily GPU quota; availability is not guaranteed."
+          ? "Free service is reachable. Provider limits and queues apply; availability is not guaranteed."
           : "The free service is not ready.",
       );
     } catch (e) {
-      setModelStatus(e.message);
+      setModelStatus(
+        e.message +
+          (typeof e.tokenConfigured === "boolean"
+            ? e.tokenConfigured
+              ? " Cloudflare has a server token configured."
+              : " No HF_TOKEN secret is configured for this deployment."
+            : ""),
+      );
     } finally {
       setBusy(false);
     }

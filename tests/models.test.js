@@ -246,3 +246,82 @@ test("legacy Gradio HTTP queue is supported without retrying an accepted inferen
   assert.deepEqual(await convertPhoto(image, {}, fetcher), modern.bytes);
   assert.equal(joins, 2);
 });
+
+test("service detection falls back when a legacy Space serves HTML on the modern path", async () => {
+  const paths = [];
+  const info = await providerInfo({}, async (url) => {
+    paths.push(String(url));
+    return String(url).includes("/gradio_api/")
+      ? new Response("<!doctype html><html>App shell</html>", {
+          headers: { "Content-Type": "text/html" },
+        })
+      : Response.json({
+          named_endpoints: { "/generate": {}, "/preprocess": {} },
+        });
+  });
+  assert.equal(info.base, "");
+  assert.equal(paths.length, 2);
+});
+test("safe same-host redirects and token whitespace work without leaking credentials cross-host", async () => {
+  const calls = [];
+  const info = await providerInfo(
+    { HF_TOKEN: "  hf_fixtureReadToken123\n" },
+    async (url, options) => {
+      calls.push({ url: String(url), options });
+      if (!String(url).endsWith("/"))
+        return new Response(null, {
+          status: 307,
+          headers: { Location: "/gradio_api/info/" },
+        });
+      return Response.json({
+        named_endpoints: { "/generate": {}, "/preprocess": {} },
+      });
+    },
+  );
+  assert.equal(info.base, "/gradio_api");
+  assert.equal(calls.length, 2);
+  assert.ok(
+    calls.every(
+      (call) =>
+        call.options.headers.Authorization === "Bearer hf_fixtureReadToken123",
+    ),
+  );
+  let count = 0;
+  await assert.rejects(
+    providerInfo({ HF_TOKEN: "hf_fixtureSecret" }, async () => {
+      count++;
+      return new Response(null, {
+        status: 302,
+        headers: { Location: "https://other.test/sign-in" },
+      });
+    }),
+    (error) =>
+      error.code === "provider_redirect" &&
+      !error.message.includes("hf_fixtureSecret"),
+  );
+  assert.equal(count, 1);
+});
+test("connection, timeout, denied access and HTML failures are distinct and safe", async () => {
+  await assert.rejects(
+    providerInfo({}, async () => {
+      throw new TypeError("private upstream diagnostic");
+    }),
+    (e) =>
+      e.code === "provider_network" &&
+      !e.message.includes("private upstream diagnostic"),
+  );
+  await assert.rejects(
+    providerInfo({}, async () => {
+      throw new DOMException("upstream", "TimeoutError");
+    }),
+    (e) => e.code === "provider_timeout",
+  );
+  await assert.rejects(
+    providerInfo({}, async () => new Response("Denied", { status: 401 })),
+    (e) => e.code === "provider_access" && /HTTP 401/.test(e.message),
+  );
+  await assert.rejects(
+    providerInfo({}, async () => new Response("<html>Starting</html>")),
+    (e) => e.code === "provider_not_json",
+  );
+});

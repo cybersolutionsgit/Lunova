@@ -126,7 +126,7 @@ export async function handleApi(req, env = {}) {
             ready: true,
             provider: "TripoSR on Hugging Face",
             space: provider.origin,
-            authenticated: !!env.HF_TOKEN,
+            authenticated: !!String(env.HF_TOKEN || "").trim(),
           });
         }
         if (path === "/api/admin/models/generate" && req.method === "POST") {
@@ -140,10 +140,12 @@ export async function handleApi(req, env = {}) {
         return json(
           {
             ready: false,
+            code: e instanceof ModelError ? e.code : "model_internal_error",
+            tokenConfigured: !!String(env.HF_TOKEN || "").trim(),
             error:
               e instanceof ModelError
                 ? e.message
-                : "The hosted 3D service could not be reached. Your photos are unchanged. Check Space availability and HF_TOKEN access; no paid fallback is used.",
+                : "The model connector could not complete its service check (model_internal_error). Your photos are unchanged; no paid fallback is used.",
           },
           e instanceof ModelError ? e.status : 503,
         );

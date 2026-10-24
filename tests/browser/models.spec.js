@@ -143,3 +143,30 @@ test("a failed model load falls back without breaking the store", async ({
   ).toBeVisible();
   expect(errors).toEqual([]);
 });
+
+test("service diagnostics distinguish connection failure from a missing server token", async ({
+  page,
+}) => {
+  await mockCms(page);
+  await page.route("**/api/admin/models/status", (route) =>
+    route.fulfill({
+      status: 503,
+      json: {
+        ready: false,
+        code: "provider_network",
+        tokenConfigured: true,
+        error:
+          "No HTTP response from the configured Space. Check whether the Space is running.",
+      },
+    }),
+  );
+  await page.goto("/");
+  await openAdmin(page);
+  await page
+    .getByRole("button", { name: "Check free 3D service", exact: true })
+    .click();
+  await expect(page.getByRole("status")).toContainText("No HTTP response");
+  await expect(page.getByRole("status")).toContainText(
+    "Cloudflare has a server token configured",
+  );
+});
