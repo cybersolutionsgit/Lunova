@@ -1,4 +1,5 @@
 import { useEffect, useRef } from "react";
+import { createPortal } from "react-dom";
 import { X } from "lucide-react";
 export default function Modal({ title, children, onClose, wide = false }) {
   const ref = useRef();
@@ -41,7 +42,7 @@ export default function Modal({ title, children, onClose, wide = false }) {
       prev?.focus();
     };
   }, [onClose]);
-  return (
+  const content = (
     <div
       className="modal-backdrop"
       onPointerDown={(e) => {
@@ -70,4 +71,6 @@ export default function Modal({ title, children, onClose, wide = false }) {
       </section>
     </div>
   );
+  const host = document.getElementById("store-overlay-root");
+  return host ? createPortal(content, host) : content;
 }

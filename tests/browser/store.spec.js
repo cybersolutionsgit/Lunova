@@ -78,6 +78,7 @@ test("mobile touch movement, graphics, search and responsive width", async ({
       () => document.documentElement.scrollWidth <= innerWidth,
     ),
   ).toBe(true);
+  await page.getByRole("button", { name: "Close dialog" }).click();
   await openEditor(page);
   await page
     .getByRole("button", { name: "Add a product", exact: true })
@@ -104,6 +105,9 @@ test("walking stops at the feature fixture and collection shortcuts are safe", a
   );
   await page.getByRole("button", { name: "Return to entrance" }).click();
   await expect(marker).toHaveAttribute("data-z", "9.00");
+  await page
+    .getByRole("button", { name: "Open store sidebar", exact: true })
+    .click();
   await page
     .getByRole("button", { name: "Bras & bralettes", exact: true })
     .click();

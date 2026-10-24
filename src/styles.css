@@ -2306,3 +2306,511 @@ kbd {
   color: #d7b1b7;
   font-family: Georgia, serif;
 }
+/* The store is the application surface; every panel is layered within it. */
+.store-shell {
+  position: fixed;
+  inset: 0;
+  margin: 0;
+  width: 100%;
+  height: 100dvh;
+  min-width: 0;
+  overflow: hidden;
+  background: #e9d9d0;
+}
+.store-shell .immersive-world {
+  position: relative;
+  width: 100%;
+  height: 100%;
+  border: 0;
+  border-radius: 0;
+  overflow: hidden;
+}
+.store-header {
+  position: absolute;
+  top: 18px;
+  left: 22px;
+  right: 22px;
+  z-index: 15;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 15px;
+  pointer-events: none;
+}
+.store-brand {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  background: #fff7efed;
+  border: 1px solid #e9d5c9;
+  border-radius: 12px;
+  padding: 12px 17px;
+  box-shadow: 0 4px 25px #6941510d;
+  color: #805064;
+  pointer-events: auto;
+  backdrop-filter: blur(12px);
+}
+.store-brand > svg {
+  background: #805064;
+  color: #fceee5;
+  border-radius: 8px;
+  padding: 5px;
+  width: 36px;
+  height: 36px;
+}
+.store-brand span {
+  font-size: 9px;
+  letter-spacing: 2.3px;
+  color: #96687f;
+}
+.store-brand h1 {
+  font-size: 19px;
+  letter-spacing: -0.3px;
+  margin: 3px 0 0;
+  font-weight: 400;
+}
+.store-header-actions {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  background: #fff7efe8;
+  border: 1px solid #e9d5c9;
+  padding: 8px;
+  border-radius: 10px;
+  pointer-events: auto;
+  backdrop-filter: blur(12px);
+}
+.store-header-actions .settings-button {
+  border: 0;
+  padding: 8px;
+}
+.store-header-actions .bag-button {
+  font-size: 11px;
+}
+.store-toolbar {
+  position: absolute;
+  left: 50%;
+  transform: translateX(-50%);
+  top: 24px;
+  z-index: 16;
+  background: #fff7eff0;
+  border: 1px solid #e9d5c9;
+  box-shadow: 0 4px 25px #6941510d;
+  backdrop-filter: blur(12px);
+  padding: 7px;
+  border-radius: 10px;
+  display: flex;
+  align-items: center;
+  gap: 12px;
+}
+.store-toolbar .toolbar-actions {
+  gap: 8px;
+}
+.store-toolbar .settings-button {
+  border-left: 1px solid #e2c9d2;
+  padding: 8px 10px;
+}
+.store-toolbar .view-tabs button {
+  white-space: nowrap;
+  font-size: 10px;
+}
+.store-shell .scene-top {
+  top: 108px;
+  left: 26px;
+  right: 26px;
+  z-index: 5;
+}
+.store-shell .scene-greeting {
+  top: 150px;
+  left: 29px;
+  max-width: 250px;
+  z-index: 5;
+}
+.store-shell .scene-greeting h2 {
+  font-size: 37px;
+}
+.store-shell .scene-greeting p {
+  font-size: 10px;
+  line-height: 1.7;
+}
+.store-shell .scene-controls {
+  right: 24px;
+  bottom: 93px;
+  z-index: 10;
+}
+.store-shell .minimap {
+  left: 24px;
+  bottom: 95px;
+  z-index: 5;
+}
+.store-shell .world-bottom {
+  z-index: 10;
+  padding: 15px 24px;
+  background: #fff7eff0;
+}
+.store-shell .world-bottom > div {
+  font-size: 10px;
+}
+.store-shell .world-bottom > button {
+  font-size: 10px;
+}
+.store-shell .touch-pad {
+  z-index: 10;
+  bottom: 96px;
+  right: 79px;
+}
+.store-demo-label {
+  position: absolute;
+  bottom: 71px;
+  left: 50%;
+  transform: translateX(-50%);
+  font-size: 8px;
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  background: #fff7efdf;
+  color: #9b7589;
+  padding: 7px 11px;
+  border-radius: 6px;
+  z-index: 5;
+  max-width: calc(100% - 30px);
+  text-align: center;
+  white-space: nowrap;
+}
+.sidebar-toggle {
+  position: absolute;
+  left: 16px;
+  top: 48%;
+  z-index: 60;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 7px;
+  background: #fff7eff5;
+  color: #93627c;
+  border: 1px solid #d9bac8;
+  border-radius: 9px;
+  padding: 13px 9px;
+  box-shadow: 0 4px 15px #68445512;
+  transition: left 0.2s;
+}
+.sidebar-toggle > span {
+  font-size: 8px;
+  writing-mode: vertical-rl;
+  letter-spacing: 1px;
+}
+.sidebar-is-open .sidebar-toggle {
+  left: 291px;
+}
+.sidebar-scrim {
+  position: absolute;
+  inset: 0;
+  z-index: 40;
+  background: #4d2e3c21;
+  backdrop-filter: blur(1px);
+}
+.store-shell .in-world-sidebar {
+  display: flex;
+  position: absolute;
+  inset: 0 auto 0 0;
+  width: 278px;
+  max-width: calc(100vw - 65px);
+  padding: 26px 22px;
+  z-index: 50;
+  background: #fbf1ebf5;
+  border: 0;
+  border-right: 1px solid #dfc6cf;
+  box-shadow: 8px 0 45px #5a3a4a15;
+  overflow: auto;
+  backdrop-filter: blur(15px);
+}
+.store-shell .in-world-sidebar .brand {
+  font-size: 36px;
+  justify-content: flex-start;
+  gap: 8px;
+}
+.store-shell .in-world-sidebar .brand-dot {
+  display: inline;
+}
+.store-shell .in-world-sidebar .store-label {
+  display: flex;
+  margin-bottom: 28px;
+}
+.store-shell .in-world-sidebar .sidebar-heading {
+  display: block;
+}
+.store-shell .in-world-sidebar .aisles-heading {
+  display: flex;
+  margin-top: 22px;
+}
+.store-shell .in-world-sidebar .nav-main {
+  font-size: 12px;
+  padding: 13px 12px;
+  gap: 10px;
+  justify-content: flex-start;
+  margin: 0 0 5px;
+}
+.store-shell .in-world-sidebar .nav-main > svg,
+.store-shell .in-world-sidebar .nav-main > span {
+  display: block;
+}
+.store-shell .in-world-sidebar .nav-main > svg:last-child {
+  margin-left: auto;
+}
+.store-shell .in-world-sidebar .category {
+  padding: 12px;
+  justify-content: flex-start;
+  gap: 12px;
+  font-size: 12px;
+}
+.store-shell .in-world-sidebar .category > span {
+  display: inline;
+}
+.store-shell .in-world-sidebar nav {
+  margin-top: 0;
+}
+.store-shell .in-world-sidebar .sidebar-bottom {
+  display: block;
+  padding-top: 20px;
+}
+.store-shell .in-world-sidebar .customize-nav {
+  margin-top: 15px;
+}
+.store-shell .in-world-sidebar .category-dot {
+  display: inline-block;
+}
+#store-overlay-root {
+  position: absolute;
+  inset: 0;
+  z-index: 100;
+  pointer-events: none;
+}
+#store-overlay-root .modal-backdrop {
+  position: absolute;
+  inset: 0;
+  pointer-events: auto;
+  backdrop-filter: blur(2px);
+  background: #47253752;
+  padding: 22px;
+}
+#store-overlay-root .modal {
+  max-height: calc(100dvh - 44px);
+  box-shadow: 0 15px 80px #3c1f3a40;
+}
+.store-shell .catalog {
+  padding: 20px;
+}
+.store-shell .catalog-head h2 {
+  font-size: 24px;
+  margin: 0;
+}
+.store-shell .catalog .product-grid {
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+}
+.store-shell .toast {
+  z-index: 150;
+  bottom: 85px;
+}
+.store-shell .scene-fallback {
+  padding-top: 170px;
+  padding-bottom: 120px;
+}
+@media (max-width: 1200px) {
+  .store-toolbar {
+    top: 106px;
+  }
+  .store-shell .scene-top {
+    top: 173px;
+  }
+  .store-shell .scene-greeting {
+    top: 217px;
+  }
+  .store-brand h1 {
+    font-size: 18px;
+  }
+  .store-toolbar .settings-button {
+    font-size: 9px;
+  }
+  .store-shell .scene-greeting h2 {
+    font-size: 32px;
+  }
+}
+@media (max-width: 580px) {
+  .store-header {
+    top: 12px;
+    left: 12px;
+    right: 12px;
+    gap: 8px;
+  }
+  .store-brand {
+    padding: 9px 10px;
+    gap: 7px;
+    border-radius: 8px;
+  }
+  .store-brand > svg {
+    width: 29px;
+    height: 29px;
+  }
+  .store-brand span {
+    font-size: 7px;
+    letter-spacing: 1.3px;
+  }
+  .store-brand h1 {
+    font-size: 14px;
+    margin-top: 3px;
+  }
+  .store-header-actions {
+    padding: 5px;
+    gap: 3px;
+  }
+  .store-header-actions .settings-button {
+    padding: 7px;
+  }
+  .store-header-actions .bag-button {
+    padding: 8px;
+    font-size: 9px;
+    gap: 6px;
+  }
+  .store-header-actions .bag-button > b {
+    width: 18px;
+    height: 18px;
+    font-size: 9px;
+  }
+  .store-header-actions .bag-button > span {
+    display: none;
+  }
+  .store-toolbar {
+    top: 85px;
+    max-width: calc(100% - 24px);
+    width: max-content;
+    gap: 6px;
+    padding: 6px;
+    border-radius: 8px;
+  }
+  .store-toolbar .view-tabs button {
+    font-size: 9px;
+    padding: 8px;
+  }
+  .store-toolbar .toolbar-actions {
+    gap: 0;
+  }
+  .store-toolbar .settings-button {
+    padding: 7px;
+  }
+  .store-shell .scene-top {
+    top: 147px;
+    left: 16px;
+    right: 16px;
+  }
+  .store-shell .scene-greeting {
+    top: 190px;
+    left: 19px;
+    max-width: 180px;
+  }
+  .store-shell .scene-greeting h2 {
+    font-size: 29px;
+  }
+  .store-shell .scene-greeting p {
+    font-size: 9px;
+  }
+  .store-shell .minimap {
+    left: 13px;
+    bottom: 90px;
+    width: 77px;
+    padding: 7px;
+  }
+  .store-shell .minimap svg {
+    width: 59px;
+    height: 53px;
+  }
+  .store-shell .scene-controls {
+    right: 13px;
+    bottom: 90px;
+  }
+  .store-shell .touch-pad {
+    right: 55px;
+    bottom: 90px;
+  }
+  .store-shell .world-bottom {
+    padding: 13px 14px;
+    min-height: 54px;
+  }
+  .store-shell .world-bottom > div {
+    font-size: 8px;
+  }
+  .store-shell .world-bottom > button {
+    font-size: 8px;
+    padding: 9px;
+  }
+  .store-demo-label {
+    font-size: 7px;
+    bottom: 64px;
+    white-space: normal;
+    justify-content: center;
+    gap: 4px;
+    width: max-content;
+    max-width: calc(100% - 25px);
+  }
+  .store-demo-label > span:last-child {
+    display: none;
+  }
+  .sidebar-toggle {
+    left: 10px;
+    padding: 10px 7px;
+  }
+  .sidebar-is-open .sidebar-toggle {
+    left: min(291px, calc(100vw - 55px));
+  }
+  .store-shell .in-world-sidebar {
+    padding: 24px 18px;
+  }
+  #store-overlay-root .modal-backdrop {
+    padding: 12px;
+  }
+  #store-overlay-root .modal {
+    max-height: calc(100dvh - 24px);
+  }
+  .store-shell .catalog {
+    padding: 15px;
+  }
+  .store-shell .catalog .product-grid {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+  .store-shell .catalog-head {
+    align-items: stretch;
+  }
+  .store-shell .toast {
+    bottom: 75px;
+  }
+}
+@media (max-height: 650px) {
+  .store-shell .scene-greeting {
+    display: none;
+  }
+  .store-shell .in-world-sidebar .little-card {
+    display: none;
+  }
+  .store-shell .minimap {
+    display: none;
+  }
+  .store-shell .in-world-sidebar .store-label {
+    margin-bottom: 15px;
+  }
+  .store-shell .in-world-sidebar .category {
+    padding: 8px 12px;
+  }
+  .store-shell .in-world-sidebar .aisles-heading {
+    margin-top: 12px;
+  }
+}
+.touch-look-hint {
+  display: none;
+}
+@media (pointer: coarse) {
+  .desktop-look-hint {
+    display: none;
+  }
+  .touch-look-hint {
+    display: inline;
+  }
+}

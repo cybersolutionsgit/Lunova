@@ -4,7 +4,7 @@ A walkable lingerie boutique built with React, Vite, JavaScript, React Three Fib
 
 ## For the store owner
 
-Open **Customize** above the 3D view (or **Customize boutique** in the sidebar).
+The 3D boutique opens immediately and fills the viewport. Open **Customize** in the floating store toolbar (or **Customize boutique** in the sidebar).
 
 - **Add/edit products:** name, collection, price, sizes/note, description, featured image, garment color, and demo bag quantity limit.
 - **Display position:** choose a numbered display (1–12) or Catalog only. Two products cannot occupy one display. All products remain searchable in Product view.
@@ -33,7 +33,9 @@ On your own computer use your actual checkout path. No runtime variables, creden
 
 ### Controls and fallback
 
-WASD / arrow keys walk, dragging looks around, clicking a product photo or mannequin opens details. Touch devices have an arrow pad. Optional mouse capture uses “Enter walk mode”; Esc releases it. Collection shortcuts move to safe positions. The entrance reset restores the camera. Settings → Lightweight reduces resolution and disables shadows. Product view remains usable without 3D.
+The 3D environment is always mounted and fills the screen by default. The Collections button on the left opens a sidebar over the scene; it never shrinks the store. Product view, product details, bag, editor, help and settings are popups inside the environment, including browser full-screen mode. Closing a product returns to the store without losing camera position.
+
+WASD / arrow keys walk. On desktop, moving the mouse over the scene turns the camera without clicking or dragging. Moving onto UI controls or leaving the scene stops mouse look. Touch devices retain drag-to-look and an arrow pad. Optional “Capture mouse” supports continuous turning; Esc releases it. Camera and walking pause while the sidebar or a dialog is open. Collection shortcuts move to safe positions. The entrance reset restores the camera. Settings → Lightweight reduces resolution and disables shadows. Product view remains usable without 3D.
 
 ### Validation
 
@@ -43,7 +45,7 @@ npm run build
 npm run test:e2e
 ```
 
-Unit tests validate the supplied catalog and cart mutation, edited/deleted product reconciliation, fixture collisions, safe spawns, catalog validation, image/link protocols, duplicate display prevention, and paginated WooCommerce data conversion. Browser tests cover rendered 3D product selection, movement/collision, mobile controls, bag persistence, search, editor CRUD/persistence and import success/failure with mocked source responses. The source feed and downloaded image files were checked; real-device performance and automatic source synchronization remain separate checks.
+Unit tests validate the supplied catalog and cart mutation, edited/deleted product reconciliation, fixture collisions, safe spawns, catalog validation, image/link protocols, duplicate display prevention, and paginated WooCommerce data conversion. Browser tests cover the full-viewport default, canvas/position persistence across panels, hover camera controls, in-environment fullscreen dialogs, rendered 3D product selection, movement/collision, mobile controls, bag persistence, search, editor CRUD/persistence and import success/failure with mocked source responses. The source feed and downloaded image files were checked; real-device performance and automatic source synchronization remain separate checks.
 
 Playwright uses `/usr/bin/chromium` when available. Set `PLAYWRIGHT_CHROMIUM_EXECUTABLE_PATH` to another installed executable, or run `npx playwright install chromium`. CI installs its browser/dependencies. Headless Linux uses software WebGL. The Three.js chunk is large (~250KB compressed); the 3D scene is lazy-loaded. Hardware and accessibility review are still needed before a commercial launch.
 

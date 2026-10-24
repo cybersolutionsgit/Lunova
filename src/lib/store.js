@@ -66,7 +66,6 @@ export const useWorld = create((set) => ({
   notice: "",
   select: (p) => {
     document.exitPointerLock?.();
-    if (document.fullscreenElement) document.exitFullscreen?.().catch(() => {});
     set({ selected: p, modal: null });
   },
   setCategory: (category) => set({ category }),
@@ -74,7 +73,6 @@ export const useWorld = create((set) => ({
   goTo: (position) => set({ teleport: { position, time: Date.now() } }),
   setModal: (modal) => {
     document.exitPointerLock?.();
-    if (document.fullscreenElement) document.exitFullscreen?.().catch(() => {});
     set({ modal });
   },
   setLocked: (locked) => set({ locked }),

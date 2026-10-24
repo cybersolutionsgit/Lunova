@@ -6,6 +6,8 @@ A procedural 3D store, first-person/touch movement, bounded collision, product i
 
 ## Current — lingerie boutique and local customization
 
+The immersive UI opens directly into a full-viewport scene. A collapsible side panel and in-environment popups preserve the canvas and camera position. Desktop camera look follows mouse movement without dragging; touch dragging remains supported.
+
 - Replace grocery shelving with tall brass display rails, featured-image panels, stylized mannequins, fitting-room scenery and boutique colors.
 - Collections for lingerie sets, bras, underwear, sleepwear and robes; original labelled samples until an actual catalog is imported.
 - Device-local product editor: photos/uploads, names/descriptions, prices, demo limits, color, display slots and presentation.

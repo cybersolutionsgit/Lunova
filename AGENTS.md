@@ -6,7 +6,7 @@ Lunova Secrets is a browser-based 3D lingerie boutique, replacing the original g
 
 ## Architecture
 
-- `src/App.jsx`: responsive shell, catalog, product details, demo cart, settings and guidance.
+- `src/App.jsx`: immersive viewport shell with a permanently mounted scene, collapsible overlay sidebar, popup catalog/details/cart/settings and guidance.
 - `src/components/StoreScene.jsx`: procedural clothing rails, photo panels, stylized mannequin forms, textures, frame-based player controls, graphics fallback.
 - `src/lib/products.js`: collection definitions, default JSON catalog and currency formatting. `src/data/catalog.json` is the published snapshot of 21 real WooCommerce products in PKR. `src/data/sample-catalog.json` retains the original eight labelled samples.
 - `src/lib/world.js`: 12 fixed display footprints, bounded movement with substeps, safe collection positions.
@@ -18,7 +18,7 @@ Lunova Secrets is a browser-based 3D lingerie boutique, replacing the original g
 
 - `src/lib/catalog.js`: pure catalog validation, safe image/link protocols, HTML-to-text conversion, WooCommerce Store API transformation and public paginated import (no credentials).
 - `src/components/CatalogEditor.jsx`: local demo editor, photo resize/upload, import preview, JSON backup/restore, CRUD and display slots. This is not secure administration and does not change WordPress or other visitors.
-- `src/components/Modal.jsx` and `ProductArt.jsx`: reusable dialog and featured-image/fallback components.
+- `src/components/Modal.jsx` and `ProductArt.jsx`: dialogs portal into #store-overlay-root inside the environment so they remain visible in fullscreen; featured-image/fallback components.
 
 ## Owner direction
 
@@ -34,4 +34,4 @@ No secrets in source, logs, scripts, commits, or chat. All VITE_* variables are 
 
 ## 3D conventions
 
-Keep CPU/GPU work bounded, cap device pixel ratio, reuse geometry/materials/textures, use simple shapes and no unnecessary physics library. Movement must be frame-rate independent and collider data must stay in sync with display fixture placement. Touch and keyboard controls need equivalent functionality. A 2D catalog is always available. Any added model/texture must have a compatible license and documented source.
+Keep CPU/GPU work bounded, cap device pixel ratio, reuse geometry/materials/textures, use simple shapes and no unnecessary physics library. Default desktop mouse look uses uncaptured pointer motion over the canvas, not drag; touch retains dragging. Pause movement/look while sidebar/catalog/dialogs are open. UI pointer events must not rotate the camera. Never unmount the scene when opening catalog/details, and do not exit fullscreen to show dialogs. Movement must be frame-rate independent and collider data must stay in sync with display fixture placement. Touch and keyboard controls need equivalent functionality. A 2D catalog is always available. Any added model/texture must have a compatible license and documented source.

@@ -464,7 +464,8 @@ function Player({ enabled, onPosition }) {
   const yaw = useRef(0),
     pitch = useRef(-0.05),
     keys = useRef({}),
-    drag = useRef(null);
+    drag = useRef(null),
+    hover = useRef(null);
   const teleport = useWorld((s) => s.teleport);
   const selected = useWorld((s) => s.selected),
     modal = useWorld((s) => s.modal);
@@ -483,8 +484,7 @@ function Player({ enabled, onPosition }) {
   }, [teleport, camera]);
   useEffect(() => {
     const down = (e) => {
-      if (["INPUT", "TEXTAREA", "BUTTON", "SELECT"].includes(e.target.tagName))
-        return;
+      if (["INPUT", "TEXTAREA", "SELECT"].includes(e.target.tagName)) return;
       if (
         [
           "KeyW",
@@ -508,6 +508,7 @@ function Player({ enabled, onPosition }) {
       keys.current = {};
       Object.keys(movement).forEach((k) => (movement[k] = false));
       drag.current = null;
+      hover.current = null;
     };
     const lock = () => setLocked(document.pointerLockElement === gl.domElement);
     const move = (e) => {
@@ -517,6 +518,18 @@ function Player({ enabled, onPosition }) {
       if (document.pointerLockElement === gl.domElement) {
         dx = e.movementX;
         dy = e.movementY;
+      } else if (e.pointerType === "mouse") {
+        if (e.target !== gl.domElement) {
+          hover.current = null;
+          return;
+        }
+        if (!hover.current) {
+          hover.current = { x: e.clientX, y: e.clientY };
+          return;
+        }
+        dx = e.clientX - hover.current.x;
+        dy = e.clientY - hover.current.y;
+        hover.current = { x: e.clientX, y: e.clientY };
       } else if (drag.current && drag.current.id === e.pointerId) {
         dx = e.clientX - drag.current.x;
         dy = e.clientY - drag.current.y;
@@ -536,12 +549,16 @@ function Player({ enabled, onPosition }) {
     const stop = () => {
       drag.current = null;
     };
+    const leave = () => {
+      hover.current = null;
+    };
     window.addEventListener("keydown", down);
     window.addEventListener("keyup", up);
     window.addEventListener("blur", clear);
     document.addEventListener("pointerlockchange", lock);
     window.addEventListener("pointermove", move);
     gl.domElement.addEventListener("pointerdown", start);
+    gl.domElement.addEventListener("pointerleave", leave);
     window.addEventListener("pointerup", stop);
     window.addEventListener("pointercancel", clear);
     return () => {
@@ -552,6 +569,7 @@ function Player({ enabled, onPosition }) {
       document.removeEventListener("pointerlockchange", lock);
       window.removeEventListener("pointermove", move);
       gl.domElement.removeEventListener("pointerdown", start);
+      gl.domElement.removeEventListener("pointerleave", leave);
       window.removeEventListener("pointerup", stop);
       window.removeEventListener("pointercancel", clear);
     };
@@ -581,7 +599,7 @@ function Player({ enabled, onPosition }) {
     camera.rotation.set(pitch.current, yaw.current, 0);
     elapsed.current += dt;
     if (elapsed.current > 0.1) {
-      onPosition?.(p.x, p.z);
+      onPosition?.(p.x, p.z, yaw.current, pitch.current);
       elapsed.current = 0;
     }
   });
@@ -631,7 +649,7 @@ export default function StoreScene({ enabled = true, onPosition }) {
         onCreated={({ gl }) => {
           gl.domElement.setAttribute(
             "aria-label",
-            "Interactive 3D lingerie boutique. Use WASD to move, drag to look, and click products to inspect them.",
+            "Interactive 3D lingerie boutique. Use WASD to move, move the mouse to look (drag on touch screens), and click products to inspect them.",
           );
           gl.domElement.setAttribute("data-testid", "store-canvas");
         }}
