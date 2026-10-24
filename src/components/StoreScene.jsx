@@ -1,58 +1,45 @@
-import {
-  Suspense,
-  useEffect,
-  useMemo,
-  useRef,
-  useState,
-  Component,
-  createContext,
-  useContext,
-} from "react";
+import { Suspense, useEffect, useMemo, useRef, Component } from "react";
 import { Canvas, events, useFrame, useThree } from "@react-three/fiber";
 import * as THREE from "three";
-import { products } from "../lib/products";
-import { useWorld } from "../lib/store";
-import { shelfCenters, movePlayer } from "../lib/world";
+import { useWorld, useCatalog } from "../lib/store";
+import { displays, movePlayer } from "../lib/world";
 import { movement } from "../lib/controls";
-
 function labelTexture(
   text,
-  fg = "#2f493e",
-  bg = "#f3eedf",
-  subtitle = "L U N O V A",
+  fg = "#674451",
+  bg = "#f5ebe5",
+  subtitle = "L U N O V A  S E C R E T S",
 ) {
   const c = document.createElement("canvas");
-  c.width = 512;
+  c.width = 768;
   c.height = 256;
   const ctx = c.getContext("2d");
   ctx.fillStyle = bg;
-  ctx.fillRect(0, 0, 512, 256);
+  ctx.fillRect(0, 0, c.width, c.height);
   ctx.textAlign = "center";
   ctx.fillStyle = fg;
-  ctx.font = "600 22px sans-serif";
-  ctx.fillText(subtitle, 256, 60);
-  ctx.font = `bold ${text.length > 14 ? 32 : 44}px sans-serif`;
-  ctx.fillText(text, 256, 140);
-  ctx.font = "18px sans-serif";
-  ctx.fillText("GOOD THINGS, EVERY DAY", 256, 202);
+  ctx.font = "20px sans-serif";
+  ctx.fillText(subtitle, 384, 65);
+  ctx.font = `${text.length > 28 ? 30 : 42}px Georgia`;
+  ctx.fillText(text.slice(0, 40), 384, 150, 720);
   const t = new THREE.CanvasTexture(c);
   t.colorSpace = THREE.SRGBColorSpace;
   return t;
 }
-function Sign({ text, position, width = 3.5, bg, fg }) {
-  const map = useMemo(
-    () => labelTexture(text, fg, bg, "FIND YOUR EVERYDAY"),
-    [text, fg, bg],
-  );
+function Sign({
+  text,
+  position,
+  width = 3,
+  bg = "#f5ebe5",
+  fg = "#674451",
+  rotation,
+}) {
+  const map = useMemo(() => labelTexture(text, fg, bg), [text, fg, bg]);
   useEffect(() => () => map.dispose(), [map]);
   return (
-    <mesh position={position}>
-      <boxGeometry args={[width, 0.85, 0.09]} />
-      <meshStandardMaterial color={bg || "#f3eedf"} />
-      <mesh position={[0, 0, 0.051]}>
-        <planeGeometry args={[width - 0.08, 0.8]} />
-        <meshBasicMaterial map={map} />
-      </mesh>
+    <mesh position={position} rotation={rotation}>
+      <planeGeometry args={[width, width / 3]} />
+      <meshBasicMaterial map={map} side={THREE.DoubleSide} />
     </mesh>
   );
 }
@@ -60,162 +47,250 @@ function Box({ position, size, color, ...props }) {
   return (
     <mesh position={position} {...props}>
       <boxGeometry args={size} />
-      <meshStandardMaterial color={color} roughness={0.85} />
+      <meshStandardMaterial color={color} roughness={0.75} />
     </mesh>
   );
 }
-const ProductTextures = createContext({});
-function Product({ product, position, scale = 1 }) {
-  const select = useWorld((s) => s.select);
-  const [hover, setHover] = useState(false);
-  const maps = useContext(ProductTextures);
-  const map = maps[product.id];
-  const bottle = product.shape === "bottle";
-  const round = product.shape === "round";
-  const loaf = product.shape === "loaf";
+function Pole({ position, height = 3, radius = 0.035, rotation }) {
   return (
-    <group
-      position={position}
-      scale={scale}
-      onClick={(e) => {
-        e.stopPropagation();
-        if (e.delta < 6) select(product);
-      }}
-      onPointerOver={(e) => {
-        e.stopPropagation();
-        setHover(true);
-        document.body.style.cursor = "pointer";
-      }}
-      onPointerOut={() => {
-        setHover(false);
-        document.body.style.cursor = "auto";
-      }}
-    >
-      <mesh castShadow scale={hover ? 1.08 : 1}>
-        {round ? (
-          <sphereGeometry args={[0.24, 12, 10]} />
-        ) : bottle ? (
-          <cylinderGeometry args={[0.15, 0.19, 0.64, 12]} />
-        ) : loaf ? (
-          <capsuleGeometry args={[0.18, 0.3, 4, 10]} />
-        ) : (
-          <boxGeometry
-            args={[0.4, product.shape === "carton" ? 0.65 : 0.48, 0.3]}
-          />
-        )}
+    <mesh position={position} rotation={rotation} castShadow>
+      <cylinderGeometry args={[radius, radius, height, 10]} />
+      <meshStandardMaterial color="#b69565" metalness={0.7} roughness={0.3} />
+    </mesh>
+  );
+}
+function useProductMaps(products) {
+  const maps = useMemo(
+    () =>
+      Object.fromEntries(
+        products
+          .filter((p) => p.display !== null)
+          .map((p) => {
+            const c = document.createElement("canvas");
+            c.width = 512;
+            c.height = 684;
+            const ctx = c.getContext("2d");
+            ctx.fillStyle = "#eee1da";
+            ctx.fillRect(0, 0, 512, 684);
+            ctx.fillStyle = "#896171";
+            ctx.textAlign = "center";
+            ctx.font = "23px Georgia";
+            ctx.fillText(p.name.slice(0, 28), 256, 320);
+            ctx.font = "15px sans-serif";
+            ctx.fillText("PHOTO LOADING / UNAVAILABLE", 256, 370);
+            const texture = new THREE.CanvasTexture(c);
+            texture.colorSpace = THREE.SRGBColorSpace;
+            return [p.id, { texture, canvas: c }];
+          }),
+      ),
+    [products],
+  );
+  useEffect(() => {
+    let cancelled = false;
+    const images = [];
+    for (const p of products) {
+      const entry = maps[p.id];
+      if (!entry) continue;
+      const image = new Image();
+      image.crossOrigin = "anonymous";
+      image.onload = () => {
+        if (cancelled) return;
+        const ctx = entry.canvas.getContext("2d");
+        ctx.fillStyle = "#f5eee8";
+        ctx.fillRect(0, 0, 512, 684);
+        const scale = Math.min(512 / image.width, 684 / image.height);
+        const w = image.width * scale,
+          h = image.height * scale;
+        ctx.drawImage(image, (512 - w) / 2, (684 - h) / 2, w, h);
+        entry.texture.needsUpdate = true;
+      };
+      image.onerror = () => {
+        if (cancelled) return;
+        const ctx = entry.canvas.getContext("2d");
+        ctx.fillStyle = "#eee1da";
+        ctx.fillRect(0, 0, 512, 684);
+        ctx.fillStyle = "#896171";
+        ctx.textAlign = "center";
+        ctx.font = "23px Georgia";
+        ctx.fillText(p.name.slice(0, 28), 256, 310);
+        ctx.font = "17px sans-serif";
+        ctx.fillText("Photo unavailable in 3D", 256, 355);
+        ctx.fillText("See photo in Product view", 256, 385);
+        entry.texture.needsUpdate = true;
+      };
+      image.src = p.image;
+      images.push(image);
+    }
+    return () => {
+      cancelled = true;
+      images.forEach((i) => {
+        i.onload = null;
+        i.onerror = null;
+      });
+      Object.values(maps).forEach((v) => v.texture.dispose());
+    };
+  }, [products, maps]);
+  return maps;
+}
+function Photo({ map, position, width = 1.25 }) {
+  return (
+    <group position={position}>
+      <Box
+        position={[0, 0, -0.04]}
+        size={[width + 0.07, width * 1.336 + 0.07, 0.07]}
+        color="#b69565"
+      />
+      <mesh position={[0, 0, 0.008]}>
+        <planeGeometry args={[width, width * 1.336]} />
+        <meshBasicMaterial map={map} />
+      </mesh>
+    </group>
+  );
+}
+function Hanger({ position }) {
+  const points = useMemo(
+    () => [
+      new THREE.Vector3(-0.35, 0, 0),
+      new THREE.Vector3(0, 0.22, 0),
+      new THREE.Vector3(0.35, 0, 0),
+      new THREE.Vector3(-0.35, 0, 0),
+    ],
+    [],
+  );
+  const geo = useMemo(
+    () => new THREE.BufferGeometry().setFromPoints(points),
+    [points],
+  );
+  useEffect(() => () => geo.dispose(), [geo]);
+  return (
+    <group position={position}>
+      <line geometry={geo}>
+        <lineBasicMaterial color="#b69565" />
+      </line>
+      <Pole position={[0, 0.27, 0]} height={0.12} radius={0.012} />
+    </group>
+  );
+}
+function Form({ position, color, category }) {
+  const long = category === "sleepwear" || category === "robes";
+  return (
+    <group position={position}>
+      <mesh position={[0, 0.08, 0]}>
+        <cylinderGeometry args={[0.42, 0.45, 0.12, 24]} />
         <meshStandardMaterial
-          color={product.color}
-          roughness={0.7}
-          emissive={hover ? "#594b23" : "#000"}
-          emissiveIntensity={0.22}
+          color="#af9069"
+          metalness={0.5}
+          roughness={0.35}
         />
       </mesh>
-      {bottle && (
-        <Box
-          position={[0, 0.39, 0]}
-          size={[0.17, 0.16, 0.17]}
-          color={product.accent}
-        />
-      )}
-      {round && (
-        <Box position={[0, 0.25, 0]} size={[0.05, 0.1, 0.05]} color="#546b3a" />
-      )}
-      {!round && (
-        <mesh position={[0, 0, bottle ? 0.194 : 0.156]}>
-          <planeGeometry args={[bottle ? 0.23 : 0.36, 0.26]} />
-          <meshStandardMaterial map={map} side={THREE.DoubleSide} />
-        </mesh>
+      <Pole position={[0, 0.48, 0]} height={0.8} radius={0.035} />
+      <mesh position={[0, 1.55, 0]} scale={[0.35, 0.58, 0.2]} castShadow>
+        <sphereGeometry args={[1, 20, 18]} />
+        <meshStandardMaterial color="#d4c3b6" roughness={0.9} />
+      </mesh>
+      <mesh position={[0, 1.22, 0]} scale={[0.32, 0.24, 0.22]}>
+        <sphereGeometry args={[1, 20, 16]} />
+        <meshStandardMaterial color="#d4c3b6" />
+      </mesh>
+      <Pole position={[0, 2.17, 0]} height={0.16} radius={0.09} />
+      {long ? (
+        <>
+          <mesh position={[0, 1.4, 0]} castShadow>
+            <cylinderGeometry args={[0.32, 0.47, 1.2, 24]} />
+            <meshStandardMaterial color={color} roughness={0.45} />
+          </mesh>
+          {category === "robes" && (
+            <Box
+              position={[0, 1.45, 0.3]}
+              size={[0.65, 0.065, 0.06]}
+              color="#d6b497"
+            />
+          )}
+        </>
+      ) : (
+        <>
+          <mesh position={[0, 1.8, 0.035]} scale={[0.365, 0.19, 0.215]}>
+            <sphereGeometry args={[1, 20, 12]} />
+            <meshStandardMaterial color={color} roughness={0.75} />
+          </mesh>
+          <mesh position={[0, 1.15, 0.025]} scale={[0.33, 0.16, 0.235]}>
+            <sphereGeometry args={[1, 20, 12]} />
+            <meshStandardMaterial color={color} roughness={0.75} />
+          </mesh>
+          {[-0.24, 0.24].map((x) => (
+            <Box
+              key={x}
+              position={[x, 1.98, 0]}
+              size={[0.045, 0.3, 0.23]}
+              color={color}
+            />
+          ))}
+        </>
       )}
     </group>
   );
 }
-function Shelf({ center, index }) {
-  const x = center[0],
-    z = center[1];
-  const ids =
-    index === 0
-      ? [0, 1, 0, 1, 2, 3]
-      : index === 1
-        ? [2, 3, 4, 5, 4, 5]
-        : [6, 7, 8, 9, 6, 8];
+function Display({ fixture, index, product, map }) {
+  const select = useWorld((s) => s.select);
   return (
-    <group position={[x, 0, z]}>
+    <group
+      position={[fixture.position[0], 0, fixture.position[1]]}
+      rotation={[0, fixture.rotation, 0]}
+    >
       <Box
-        position={[0, 0.16, 0]}
-        size={[1.8, 0.32, 7]}
-        color="#b9b6a3"
+        position={[0, 0.09, 0]}
+        size={[2.3, 0.18, 1.1]}
+        color="#ddc9bd"
         castShadow
+        receiveShadow
       />
-      <Box position={[0, 1.2, 0]} size={[0.12, 2.2, 6.9]} color="#d6d1be" />
-      {[-3.4, 3.4].map((v) => (
-        <Box
-          key={v}
-          position={[0, 1.2, v]}
-          size={[1.8, 2.3, 0.12]}
-          color="#d7d1bd"
-        />
+      {[-1.04, 1.04].map((x) => (
+        <Pole key={x} position={[x, 1.5, -0.08]} height={2.8} />
       ))}
-      {[0.45, 1.1, 1.75].map((y, row) => (
-        <group key={y}>
-          <Box
-            position={[0, y, 0]}
-            size={[1.85, 0.09, 7]}
-            color="#f3eddd"
-            receiveShadow
-          />
-          {[-1, 1].map((side) => (
-            <group key={side}>
-              <Box
-                position={[side * 0.91, y - 0.025, 0]}
-                size={[0.045, 0.14, 6.9]}
-                color={
-                  index === 0 ? "#728c59" : index === 1 ? "#aa8865" : "#587c75"
-                }
-              />
-              {Array.from({ length: 12 }, (_, i) => {
-                const p = products[ids[Math.floor(i / 2)]];
-                return (
-                  <group
-                    key={i}
-                    position={[side * 0.55, y + 0.38, -3.05 + i * 0.55]}
-                    rotation={[0, side === 1 ? Math.PI / 2 : -Math.PI / 2, 0]}
-                  >
-                    <Product product={p} scale={row === 2 ? 0.85 : 1} />
-                  </group>
-                );
-              })}
-            </group>
-          ))}
-        </group>
-      ))}
-      {[0.45, 1.1, 1.75].map((y, row) => (
-        <group key={`end-${row}`}>
-          <Box
-            position={[0, y, 3.62]}
-            size={[1.8, 0.08, 0.45]}
-            color="#f3eddd"
-          />
-          {[-0.55, 0, 0.55].map((v, i) => (
-            <Product
-              key={i}
-              product={products[ids[row * 2]]}
-              position={[v, y + 0.35, 3.65]}
-              scale={0.8}
-            />
-          ))}
-        </group>
-      ))}
+      <Pole
+        position={[0, 2.9, -0.08]}
+        height={2.08}
+        rotation={[0, 0, Math.PI / 2]}
+      />
       <Sign
-        text={
-          ["01 · Fresh & green", "02 · Daily favorites", "03 · Pantry & sips"][
-            index
-          ]
-        }
-        position={[0, 3.25, 3.4]}
-        width={2.7}
-        bg={["#dce7c9", "#eee1c9", "#d3e2d9"][index]}
+        text={`${String(index + 1).padStart(2, "0")} · ${product ? product.name : "Your next favorite"}`}
+        position={[0, 3.15, 0]}
+        width={2.25}
       />
-      <Box position={[0, 2.8, 3.4]} size={[0.05, 0.4, 0.05]} color="#7b8174" />
+      {product ? (
+        <group
+          onClick={(e) => {
+            e.stopPropagation();
+            if (e.delta < 6) select(product);
+          }}
+          onPointerOver={(e) => {
+            e.stopPropagation();
+            document.body.style.cursor = "pointer";
+          }}
+          onPointerOut={() => (document.body.style.cursor = "auto")}
+        >
+          {product.presentation === "mannequin" ? (
+            <>
+              <Form
+                position={[-0.35, 0.12, 0]}
+                color={product.color}
+                category={product.category}
+              />
+              <Photo map={map} position={[0.62, 1.65, 0.3]} width={0.64} />
+            </>
+          ) : (
+            <>
+              <Hanger position={[0, 2.59, 0]} />
+              <Photo map={map} position={[0, 1.72, 0.08]} width={1.25} />
+            </>
+          )}
+        </group>
+      ) : (
+        <>
+          <Hanger position={[-0.45, 2.56, 0]} />
+          <Hanger position={[0.45, 2.56, 0]} />
+        </>
+      )}
     </group>
   );
 }
@@ -223,65 +298,61 @@ function Plant({ position }) {
   return (
     <group position={position}>
       <mesh position={[0, 0.3, 0]}>
-        <cylinderGeometry args={[0.35, 0.25, 0.6, 12]} />
-        <meshStandardMaterial color="#c7a77c" />
+        <cylinderGeometry args={[0.28, 0.22, 0.6, 12]} />
+        <meshStandardMaterial color="#c2a891" />
       </mesh>
       {[0, 1, 2, 3, 4].map((i) => (
         <mesh
           key={i}
           position={[
-            Math.sin(i * 2) * 0.22,
+            Math.sin(i * 2) * 0.2,
             0.85 + (i % 2) * 0.2,
-            Math.cos(i * 2) * 0.22,
+            Math.cos(i * 2) * 0.2,
           ]}
           rotation={[0.3, i, 0.3]}
-          scale={[0.22, 0.7, 0.15]}
+          scale={[0.16, 0.6, 0.1]}
         >
           <sphereGeometry args={[1, 8, 8]} />
-          <meshStandardMaterial color={i % 2 ? "#617d48" : "#799259"} />
+          <meshStandardMaterial color={i % 2 ? "#797d60" : "#a0a284"} />
         </mesh>
       ))}
     </group>
   );
 }
 function Market() {
-  const maps = useMemo(
-    () =>
-      Object.fromEntries(
-        products.map((p) => [p.id, labelTexture(p.label, p.accent, p.color)]),
-      ),
-    [],
-  );
-  useEffect(
-    () => () => Object.values(maps).forEach((t) => t.dispose()),
-    [maps],
-  );
+  const products = useCatalog((s) => s.products);
+  const maps = useProductMaps(products);
   const quality = useWorld((s) => s.quality);
   const floorMap = useMemo(() => {
     const c = document.createElement("canvas");
     c.width = c.height = 256;
     const ctx = c.getContext("2d");
-    ctx.fillStyle = "#e7e3d7";
+    ctx.fillStyle = "#eee5dc";
     ctx.fillRect(0, 0, 256, 256);
-    ctx.strokeStyle = "#d0ccbd";
-    ctx.lineWidth = 2;
+    ctx.strokeStyle = "#e2d6cd";
+    ctx.lineWidth = 1;
     ctx.strokeRect(0, 0, 256, 256);
+    ctx.beginPath();
+    ctx.moveTo(5, 180);
+    ctx.bezierCurveTo(80, 140, 70, 100, 150, 0);
+    ctx.strokeStyle = "#d9ccc150";
+    ctx.stroke();
     const t = new THREE.CanvasTexture(c);
     t.wrapS = t.wrapT = THREE.RepeatWrapping;
-    t.repeat.set(14, 16);
+    t.repeat.set(10, 11);
     t.colorSpace = THREE.SRGBColorSpace;
     return t;
   }, []);
   useEffect(() => () => floorMap.dispose(), [floorMap]);
   return (
-    <ProductTextures.Provider value={maps}>
-      <color attach="background" args={["#e1e7dc"]} />
-      <fog attach="fog" args={["#e1e7dc", 20, 48]} />
+    <>
+      <color attach="background" args={["#eaded7"]} />
+      <fog attach="fog" args={["#eaded7", 24, 52]} />
       <ambientLight intensity={0.65} />
-      <hemisphereLight args={["#fff8e6", "#a7b4a0", 0.8]} />
+      <hemisphereLight args={["#fff4e7", "#b5a197", 1]} />
       <directionalLight
-        position={[5, 12, 8]}
-        intensity={1.8}
+        position={[4, 10, 8]}
+        intensity={2}
         castShadow={quality === "high"}
         shadow-mapSize={[1024, 1024]}
         shadow-camera-left={-15}
@@ -291,54 +362,102 @@ function Market() {
       />
       <mesh rotation={[-Math.PI / 2, 0, 0]} position={[0, 0, 1]} receiveShadow>
         <planeGeometry args={[20, 23]} />
-        <meshStandardMaterial map={floorMap} roughness={0.85} />
+        <meshStandardMaterial map={floorMap} roughness={0.65} />
       </mesh>
-      <Box position={[0, 2, -9.5]} size={[20, 4, 0.3]} color="#d8dfcd" />
-      <Box position={[-10, 2, 1]} size={[0.25, 4, 22]} color="#e1e3d7" />
-      <Box position={[10, 2, 1]} size={[0.25, 4, 22]} color="#e1e3d7" />
-      <Box position={[0, 0.35, -9.2]} size={[20, 0.7, 0.12]} color="#7d916c" />
-      <Sign
-        text="good things grow here."
-        position={[0, 2.9, -9.3]}
-        width={7}
-        bg="#d8dfcd"
-        fg="#3a5b44"
+      <Box position={[0, 2.3, -9.5]} size={[20, 4.6, 0.3]} color="#c9a5a5" />
+      <Box position={[-10, 2.3, 1]} size={[0.25, 4.6, 22]} color="#e5d1c8" />
+      <Box position={[10, 2.3, 1]} size={[0.25, 4.6, 22]} color="#e5d1c8" />
+      <Box
+        position={[0, 0.12, -9.25]}
+        size={[20, 0.24, 0.08]}
+        color="#b39670"
       />
+      <Sign
+        text="LUNOVA secrets"
+        position={[0, 3.65, -9.3]}
+        width={6}
+        bg="#c9a5a5"
+        fg="#583b48"
+      />
+      <Sign
+        text="A little confidence. A world of you."
+        position={[0, 2.8, -9.3]}
+        width={4.7}
+        bg="#c9a5a5"
+        fg="#684551"
+      />
+      {[-7, 7].map((x) => (
+        <group key={x} position={[x, 0, -8.9]}>
+          <Box position={[0, 1.4, 0]} size={[2.2, 2.8, 0.08]} color="#76505c" />
+          {Array.from({ length: 10 }, (_, i) => (
+            <mesh key={i} position={[-1 + i * 0.22, 1.4, 0.06]}>
+              <cylinderGeometry args={[0.13, 0.13, 2.8, 10]} />
+              <meshStandardMaterial
+                color={i % 2 ? "#936674" : "#825765"}
+                roughness={1}
+              />
+            </mesh>
+          ))}
+          <Sign text="FITTING ROOM" position={[0, 3.1, 0.1]} width={1.8} />
+        </group>
+      ))}
       {[-7, 0, 7].map((x) => (
         <group key={x}>
-          <Box position={[x, 4, 0]} size={[0.2, 0.18, 19]} color="#777c6c" />
-          {[-6, 1, 8].map((z) => (
-            <Box
-              key={z}
-              position={[x, 3.9, z]}
-              size={[2.5, 0.08, 0.55]}
-              color="#fffbe3"
-            />
+          <Pole
+            position={[x, 4.2, 0]}
+            height={19}
+            radius={0.035}
+            rotation={[Math.PI / 2, 0, 0]}
+          />
+          {[-5, 2, 8].map((z) => (
+            <group key={z} position={[x, 3.85, z]}>
+              <mesh>
+                <sphereGeometry args={[0.23, 16, 12]} />
+                <meshStandardMaterial
+                  color="#fff0d5"
+                  emissive="#ffe4b6"
+                  emissiveIntensity={0.5}
+                />
+              </mesh>
+              <Pole position={[0, 0.3, 0]} height={0.4} radius={0.015} />
+            </group>
           ))}
         </group>
       ))}
-      {shelfCenters.map((center, i) => (
-        <Shelf key={i} center={center} index={i} />
-      ))}
-      <Sign text="LUNOVA MARKET" position={[-7.6, 2.8, -8.8]} width={3} />
-      <Box position={[-4, 2.1, 11.7]} size={[0.16, 4.2, 0.2]} color="#61775a" />
-      <Box position={[4, 2.1, 11.7]} size={[0.16, 4.2, 0.2]} color="#61775a" />
-      <Box position={[0, 4.15, 11.7]} size={[8.2, 0.2, 0.2]} color="#61775a" />
-      <Plant position={[-8.6, 0, -7.5]} />
-      <Plant position={[8.6, 0, -7.5]} />
-      <Plant position={[-8.8, 0, 9]} />
-      <Plant position={[8.8, 0, 9]} />
-      <Box position={[-6, 0.012, 7.3]} size={[3, 0.02, 2]} color="#b7c49f" />
-      <Box position={[6, 0.012, 7.3]} size={[3, 0.02, 2]} color="#b7c49f" />
-      <Sign
-        text="Fresh finds. Happy days."
-        position={[-9.8, 2.5, 3]}
-        width={2.5}
+      {displays.map((fixture, index) => {
+        const product = products.find((p) => p.display === index);
+        return (
+          <Display
+            key={index}
+            fixture={fixture}
+            index={index}
+            product={product}
+            map={product && maps[product.id]?.texture}
+          />
+        );
+      })}
+      <mesh position={[0, 0.012, 7.5]} rotation={[-Math.PI / 2, 0, 0]}>
+        <circleGeometry args={[2, 64]} />
+        <meshStandardMaterial color="#cba9a5" roughness={1} />
+      </mesh>
+      <Plant position={[-8.7, 0, 9]} />
+      <Plant position={[8.7, 0, 9]} />
+      <Plant position={[-8.7, 0, -6]} />
+      <Plant position={[8.7, 0, -6]} />
+      <Box
+        position={[-4, 2.1, 11.7]}
+        size={[0.12, 4.2, 0.15]}
+        color="#b69565"
       />
-    </ProductTextures.Provider>
+      <Box position={[4, 2.1, 11.7]} size={[0.12, 4.2, 0.15]} color="#b69565" />
+      <Box
+        position={[0, 4.15, 11.7]}
+        size={[8.2, 0.12, 0.15]}
+        color="#b69565"
+      />
+    </>
   );
 }
-
 function Player({ enabled, onPosition }) {
   const elapsed = useRef(0);
   const { camera, gl } = useThree();
@@ -476,10 +595,10 @@ class SceneBoundary extends Component {
   render() {
     return this.state.error ? (
       <div className="scene-fallback">
-        <h2>Your product aisle is ready</h2>
+        <h2>Your boutique collection is ready</h2>
         <p>
           3D graphics aren’t available on this device. You can still browse
-          every sample product using the Browse products button.
+          every product using the Browse products button.
         </p>
       </div>
     ) : (
@@ -512,7 +631,7 @@ export default function StoreScene({ enabled = true, onPosition }) {
         onCreated={({ gl }) => {
           gl.domElement.setAttribute(
             "aria-label",
-            "Interactive 3D supermarket. Use WASD to move, drag to look, and click products to inspect them.",
+            "Interactive 3D lingerie boutique. Use WASD to move, drag to look, and click products to inspect them.",
           );
           gl.domElement.setAttribute("data-testid", "store-canvas");
         }}

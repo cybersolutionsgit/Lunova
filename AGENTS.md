@@ -2,19 +2,27 @@
 
 ## Product and current scope
 
-Lunova is a browser-based 3D supermarket. The owner is a non-developer and manages work through natural-language requests. Explain results and required account actions briefly and plainly. Read README.md and docs/ROADMAP.md before work. Phase 1 is demo-only: no real payments, orders, auth, or backend claims. Do not enable real transactions without explicit owner authorization.
+Lunova Secrets is a browser-based 3D lingerie boutique, replacing the original grocery prototype. The owner is a non-developer and manages work through natural-language requests. Explain results and required account actions briefly and plainly. Read README.md and docs/ROADMAP.md before work. Phase 1 is demo-only: no real payments, orders, auth, or backend claims. Do not enable real transactions without explicit owner authorization.
 
 ## Architecture
 
 - `src/App.jsx`: responsive shell, catalog, product details, demo cart, settings and guidance.
-- `src/components/StoreScene.jsx`: procedural store, shelf products, textures, frame-based player controls, graphics fallback.
-- `src/lib/products.js`: local sample product catalog and USD formatting. Replace via a dedicated data layer in Phase 2.
-- `src/lib/world.js`: shelf colliders, bounded movement with substeps, safe aisle positions.
+- `src/components/StoreScene.jsx`: procedural clothing rails, photo panels, stylized mannequin forms, textures, frame-based player controls, graphics fallback.
+- `src/lib/products.js`: collection definitions, default JSON catalog and currency formatting. `src/data/catalog.json` is the published seed; samples must remain labelled.
+- `src/lib/world.js`: 12 fixed display footprints, bounded movement with substeps, safe collection positions.
 - `src/lib/controls.js`: transient touch movement shared with the render loop.
 - `src/lib/cart.js`: pure cart validation, stock caps and integer-cent totals.
-- `src/lib/store.js`: Zustand UI/world state and versioned localStorage cart; saved cart is sanitized on hydration.
-- `src/styles.css`: Tailwind import and responsive design system / component styles. Do not require remote fonts or assets.
+- `src/lib/store.js`: Zustand UI/world/catalog state, versioned localStorage cart, validated device-local catalog saves. Cart hydration and product edits reconcile stock/deleted items.
+- `src/styles.css`: Tailwind import and responsive design system / component styles. No remote fonts. Imported product images may use HTTPS; preserve fallback behavior.
 - `tests/core.test.js`: data/cart/collision unit tests; `tests/browser`: Playwright interaction tests.
+
+- `src/lib/catalog.js`: pure catalog validation, safe image/link protocols, HTML-to-text conversion, WooCommerce Store API transformation and public paginated import (no credentials).
+- `src/components/CatalogEditor.jsx`: local demo editor, photo resize/upload, import preview, JSON backup/restore, CRUD and display slots. This is not secure administration and does not change WordPress or other visitors.
+- `src/components/Modal.jsx` and `ProductArt.jsx`: reusable dialog and featured-image/fallback components.
+
+## Owner direction
+
+Keep developing on Cloudflare for now. The owner plans to move files/database onto existing hosting later and keep WordPress at lunovasecrets.com; the boutique uses shop.lunovasecrets.com. Evaluate WooCommerce before adding a separate backend. Use the publicly visible source catalog when available; do not invent real listings or claim a successful live import when blocked. Demo quantity caps are not live inventory. A product photo does not create an accurate 3D garment; mannequin mode is stylized and paired with the photo. For public catalog changes use a reviewed seed JSON commit. Local editor changes are device-only and must be clearly labelled as such.
 
 ## Workflow
 
@@ -26,4 +34,4 @@ No secrets in source, logs, scripts, commits, or chat. All VITE_* variables are 
 
 ## 3D conventions
 
-Keep CPU/GPU work bounded, cap device pixel ratio, reuse geometry/materials/textures, use simple shapes and no unnecessary physics library. Movement must be frame-rate independent and collider data must stay in sync with shelf placement. Touch and keyboard controls need equivalent functionality. A 2D catalog is always available. Any added model/texture must have a compatible license and documented source.
+Keep CPU/GPU work bounded, cap device pixel ratio, reuse geometry/materials/textures, use simple shapes and no unnecessary physics library. Movement must be frame-rate independent and collider data must stay in sync with display fixture placement. Touch and keyboard controls need equivalent functionality. A 2D catalog is always available. Any added model/texture must have a compatible license and documented source.

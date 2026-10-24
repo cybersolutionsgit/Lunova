@@ -1,46 +1,185 @@
 import test from "node:test";
 import assert from "node:assert/strict";
 import { sanitizeCart, setQuantity, cartTotals } from "../src/lib/cart.js";
-import { canOccupy, movePlayer, aisleSpawns } from "../src/lib/world.js";
-import { products, categories } from "../src/lib/products.js";
-test("cart adds, clamps stock, removes and computes integer-cent totals", () => {
-  let cart = setQuantity({}, "milk", 2);
-  cart = setQuantity(cart, "bread", 1);
-  assert.deepEqual(cartTotals(cart), { count: 3, subtotal: 930 });
-  assert.equal(setQuantity(cart, "milk", 999).milk, 18);
-  assert.equal(setQuantity(cart, "milk", -2).milk, undefined);
-  assert.deepEqual(setQuantity(cart, "unknown", 4), cart);
+import {
+  canOccupy,
+  movePlayer,
+  aisleSpawns,
+  displays,
+} from "../src/lib/world.js";
+import { products, categories, defaultCatalog } from "../src/lib/products.js";
+import {
+  validateCatalog,
+  fromWooCommerce,
+  safeImage,
+  safeLink,
+  plainText,
+  fetchPublicCatalog,
+} from "../src/lib/catalog.js";
+test("cart adds, clamps, removes and computes integer-cent totals", () => {
+  let c = setQuantity({}, "lace-set", 2);
+  c = setQuantity(c, "soft-bralette", 1);
+  assert.deepEqual(cartTotals(c), { count: 3, subtotal: 12400 });
+  assert.equal(setQuantity(c, "lace-set", 99)["lace-set"], 10);
+  assert.equal(setQuantity(c, "lace-set", -1)["lace-set"], undefined);
+  assert.deepEqual(setQuantity(c, "unknown", 4), c);
 });
-test("saved carts reject corrupt or stale product data", () => {
+test("saved carts reject corrupt and removed data, and respect edited inventory", () => {
   assert.deepEqual(
-    sanitizeCart({ milk: 3, avocado: 999, unknown: 1, bread: 2.5, water: -1 }),
-    { milk: 3, avocado: 12 },
+    sanitizeCart({ "lace-set": 99, unknown: 2, "soft-bralette": 2.5 }),
+    { "lace-set": 10 },
   );
   assert.deepEqual(sanitizeCart(null), {});
   assert.deepEqual(sanitizeCart([]), {});
-  assert.deepEqual(sanitizeCart({ milk: "2" }), {});
+  const edited = [{ ...products[0], stock: 0 }];
+  assert.deepEqual(sanitizeCart({ "lace-set": 2 }, edited), {});
+  assert.deepEqual(setQuantity({}, "lace-set", 2, edited), {});
+  assert.deepEqual(
+    cartTotals({ "lace-set": 2 }, [{ ...products[0], price: 1.25 }]),
+    { count: 2, subtotal: 250 },
+  );
 });
-test("shelves and boundaries block movement, including long steps", () => {
-  assert.equal(canOccupy(0, -2), false);
+test("fixture collision stops movement including long steps", () => {
+  assert.equal(canOccupy(0, 3), false);
   assert.equal(canOccupy(0, 9), true);
   assert.equal(canOccupy(10, 9), false);
-  const p = movePlayer({ x: 0, z: 9 }, 0, -15);
-  assert.ok(p.z > 1.8);
+  const p = movePlayer({ x: 0, z: 9 }, 0, -20);
+  assert.ok(p.z >= 3.97);
   assert.ok(canOccupy(p.x, p.z));
   const side = movePlayer({ x: 2.5, z: 9 }, 0, -15);
   assert.ok(side.z < 0);
 });
-test("diagonal movement slides along shelf edges", () => {
-  const p = movePlayer({ x: 1.4, z: 0 }, -0.6, -1);
-  assert.ok(p.x > 1.2);
-  assert.ok(p.z < 0);
+test("diagonal movement slides along fixtures and all collection destinations are safe", () => {
+  const p = movePlayer({ x: 1.7, z: 3 }, -0.8, -1);
+  assert.ok(p.x > 1.5);
+  assert.ok(p.z < 3);
   assert.ok(canOccupy(p.x, p.z));
-});
-test("all aisle destinations are collision-free and product IDs/categories are valid", () => {
   for (const [x, , z] of Object.values(aisleSpawns)) assert.ok(canOccupy(x, z));
-  assert.equal(new Set(products.map((p) => p.id)).size, products.length);
-  for (const p of products) {
+  assert.equal(displays.length, 12);
+});
+test("seed products form a valid catalog and unique slots", () => {
+  assert.deepEqual(validateCatalog(defaultCatalog), defaultCatalog);
+  for (const p of products)
     assert.ok(categories.some((c) => c.id === p.category));
-    assert.ok(p.stock > 0 && p.price > 0);
+});
+test("invalid product edits and unsafe image/link protocols are rejected", () => {
+  assert.equal(safeImage("javascript:alert(1)"), "");
+  assert.equal(safeImage("http://example.com/a.jpg"), "");
+  assert.equal(safeImage("//example.com/a.jpg"), "");
+  assert.equal(safeImage("https://user:password@example.com/a.jpg"), "");
+  assert.equal(safeLink("javascript:alert(1)"), "");
+  assert.equal(safeImage("/products/sets.svg"), "/products/sets.svg");
+  for (const edit of [
+    { price: -1 },
+    { stock: 2.5 },
+    { display: 99 },
+    { image: "javascript:alert(1)" },
+    { category: "unknown" },
+  ])
+    assert.throws(() =>
+      validateCatalog({
+        ...defaultCatalog,
+        products: [{ ...products[0], ...edit }],
+      }),
+    );
+  assert.throws(
+    () =>
+      validateCatalog({
+        ...defaultCatalog,
+        products: [products[0], { ...products[1], display: 0 }],
+      }),
+    /same display/,
+  );
+  assert.throws(
+    () =>
+      validateCatalog({
+        ...defaultCatalog,
+        products: [products[0], products[0]],
+      }),
+    /unique/,
+  );
+});
+const woo = (id = 10) => ({
+  id,
+  name: "Rose &amp; lace set",
+  short_description: "<p>Soft <strong>lace</strong>.</p>",
+  prices: { price: "350000", currency_code: "PKR", currency_minor_unit: 2 },
+  categories: [{ name: "Lingerie sets" }],
+  images: [{ src: "https://lunovasecrets.com/wp-content/uploads/set.jpg" }],
+  is_in_stock: true,
+  permalink: "https://lunovasecrets.com/product/rose-set/",
+});
+test("WooCommerce import uses featured photos, currency and integer minor-unit prices", () => {
+  const c = fromWooCommerce([woo()]);
+  assert.equal(c.currency, "PKR");
+  assert.equal(c.source, "woocommerce");
+  assert.equal(c.products[0].price, 3500);
+  assert.equal(c.products[0].name, "Rose & lace set");
+  assert.equal(c.products[0].image, woo().images[0].src);
+  assert.equal(c.products[0].stock, 10);
+  assert.equal(c.products[0].description, "Soft lace .");
+  assert.equal(plainText("&#x2764; &quot;Lace&quot;"), '❤ "Lace"');
+});
+test("imports preserve catalog-only overflow and sold-out state without claiming live stock", () => {
+  const rows = Array.from({ length: 15 }, (_, i) => ({
+    ...woo(i + 1),
+    is_in_stock: i !== 0,
+  }));
+  const c = fromWooCommerce(rows);
+  assert.equal(c.products.length, 15);
+  assert.equal(c.products[0].stock, 0);
+  assert.equal(c.products[11].display, 11);
+  assert.equal(c.products[12].display, null);
+  assert.throws(() => fromWooCommerce([]));
+  assert.throws(() =>
+    fromWooCommerce([{ ...woo(), prices: { ...woo().prices, price: "" } }]),
+  );
+  assert.throws(
+    () =>
+      fromWooCommerce([
+        woo(),
+        { ...woo(11), prices: { ...woo().prices, currency_code: "USD" } },
+      ]),
+    /currency/,
+  );
+});
+test("public catalog importer retrieves paginated products without credentials", async () => {
+  const original = global.fetch;
+  const calls = [];
+  global.fetch = async (url, options) => {
+    calls.push({ url, options });
+    return new Response(JSON.stringify([woo(calls.length)]), {
+      headers: { "X-WP-TotalPages": "2", "Content-Type": "application/json" },
+    });
+  };
+  try {
+    const c = await fetchPublicCatalog();
+    assert.equal(c.products.length, 2);
+    assert.ok(calls[1].url.endsWith("page=2"));
+    assert.equal(calls[0].options.credentials, "omit");
+  } finally {
+    global.fetch = original;
   }
+});
+test("catalog prices and demo totals respect currency decimal precision", () => {
+  const input = {
+    ...woo(),
+    prices: { price: "12345", currency_code: "BHD", currency_minor_unit: 3 },
+  };
+  const catalog = fromWooCommerce([input]);
+  assert.equal(catalog.products[0].price, 12.345);
+  assert.equal(
+    cartTotals({ "woo-10": 2 }, catalog.products, catalog.currency).subtotal,
+    24690,
+  );
+  const yen = fromWooCommerce([
+    {
+      ...woo(),
+      prices: { price: "12345", currency_code: "JPY", currency_minor_unit: 0 },
+    },
+  ]);
+  assert.equal(
+    cartTotals({ "woo-10": 2 }, yen.products, yen.currency).subtotal,
+    24690,
+  );
 });

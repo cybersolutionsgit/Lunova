@@ -1,41 +1,32 @@
-# Lunova development roadmap
+# Lunova Secrets roadmap
 
-The goal is a walkable virtual supermarket, manageable through natural-language requests. Build incrementally; keep the prototype usable between phases. Free tiers and open-source tools are the default. Account limits and third-party terms must be checked before deployment.
+## Complete — first prototype
 
-## Phase 1 — Playable local prototype (current)
+A procedural 3D store, first-person/touch movement, bounded collision, product interaction, a searchable catalog, persistent demo bag and Cloudflare deployment preparation. The owner deployed it on Cloudflare Pages. Payments and real orders stay disabled.
 
-- React + Vite + JavaScript, React Three Fiber / Three.js, Tailwind, Zustand.
-- Original procedural store: walls, tiled floor, lighting, three shelving units, plants, signage, and ten sample products organized into five departments.
-- First-person WASD / arrow keys, drag or pointer-lock mouse look, touch movement, shelf and boundary collision, aisle shortcuts, entrance reset.
-- Click shelf products, inspect details, add to a persistent sample shopping bag, adjust quantities and remove items. Alternative searchable 2D product view.
-- Responsive interface, lightweight graphics option, modal keyboard navigation, and graceful 3D failure message.
-- Unit tests, browser smoke tests, build checks, documented setup, Cloudflare Pages deployment instructions.
-- **Exit:** tested movement/collision, rendered 3D scene, working product interaction and saved demo bag. No checkout, accounts, personal data collection, or real orders.
+## Current — lingerie boutique and local customization
 
-## Phase 2 — Product data and accounts
+- Replace grocery shelving with tall brass display rails, featured-image panels, stylized mannequins, fitting-room scenery and boutique colors.
+- Collections for lingerie sets, bras, underwear, sleepwear and robes; original labelled samples until an actual catalog is imported.
+- Device-local product editor: photos/uploads, names/descriptions, prices, demo limits, color, display slots and presentation.
+- Public WooCommerce catalog importer with pagination, import preview, validated JSON import/export, and explicit CORS/error states. Read-only access; no changes to the live WordPress site.
+- Test cart reconciliation after edits/removal, display collision, product selection, mobile controls and import failure handling.
+- **Limits:** source-site import remains unverified until live access succeeds. Local edits are not published to other visitors. Mannequins are stylized forms, not accurate garment models. At most 12 products are in 3D at once; all imported products are in the catalog.
 
-- Connect a user-owned Supabase project using its public URL and publishable key.
-- Versioned migrations for products, categories, inventory, shelf positions, profiles, and administrator memberships.
-- Supabase Auth sign-up / sign-in / sign-out, password reset, session recovery; validated inputs and accessible error states.
-- RLS on every exposed table; shoppers see only permitted public product data and their own profile. Administrator membership must never be writable by shoppers.
-- Retain explicit demo mode, decide data ownership and policies, test access as anonymous, customer, and administrator.
-- **Requires owner:** Supabase account/project, secure environment settings, permitted auth URLs.
+## Next — owner-directed design and real catalog
 
-## Phase 3 — Secure ordering and admin
+Review the boutique style; import the real catalog and verify product names, currency, photos, stock messaging, collection assignment and display positions. Publish the reviewed seed catalog for all visitors. Replace/optimize licensed assets as needed. Check source image CORS and ownership, real mobile hardware, keyboard access and frame rate. No orders yet.
 
-- Server-side authenticated checkout via a Supabase database function or Edge Function; derive prices from database, validate stock, atomically reserve inventory, prevent duplicate submissions, and store immutable order item prices.
-- Cash on Delivery only, enabled only after owner approval. Never trust client prices, quantities, order totals, roles, or status transitions.
-- Customer order history isolated by RLS; admin product CRUD, inventory, shelf placement, and order status changes with server authorization.
-- Test concurrent purchases, unauthorized requests, sold-out products, retries, and order ownership.
-- **Requires owner:** real product/inventory data, delivery region/currency, legal/privacy requirements, explicit authorization to accept real orders.
+## Later — shared catalog and hosting
 
-## Phase 4 — Production deployment and polish
+The owner prefers moving files/database to their own hosting later while keeping the current WordPress site. Evaluate existing WooCommerce installation and hosting capabilities before selecting the backend. Prefer one authoritative catalog instead of duplicating inventory. Supabase remains an alternative only if deliberately selected; do not introduce it by default.
 
-- Cloudflare Pages Git integration, preview builds, protected production branch, required CI, owner-reviewed changes.
-- Device testing, performance budgets, texture/model compression where assets are introduced, accessibility review, observability, rate limits, recovery and backups.
-- Choose any third-party models with documented redistribution licenses. Keep a 2D fallback.
-- **Requires owner:** Cloudflare/GitHub authorization, production branch selection, domain configuration and production approval.
+Implement authenticated, server-authorized editing, safe media uploads and shared display positions. Server roles must control write operations; local demo editor behavior must not be presented as secure administration. Develop on staging before touching the running WordPress store.
 
-## Later — Optional online payments
+## Later — checkout and customer accounts
 
-Choose a gateway only when requested. Use server-created payment sessions, signature-verified webhooks, idempotency, and no card data handled by this app. Requires separate explicit approval and credentials; never enable during the prototype.
+Only after explicit owner approval: authenticated/guest checkout policy, sizes/variants, delivery region/currency, Cash on Delivery, server-side authoritative pricing/stock checks, atomic inventory updates, order history and secure administrator roles. Test unauthorized operations, concurrent purchases and retries. Respect the chosen backend's access policies, rate limits and credential handling. No secrets in browser code.
+
+## Optional — real payments and realistic 3D garments
+
+Require separate approval, account access and licensed assets. Payments use server-created sessions and verified webhooks. Accurate mannequin garments need suitable garment meshes, sizing and material work; do not claim a product photo alone produces a realistic 3D garment or fitting simulation.

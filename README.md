@@ -1,17 +1,27 @@
-# Lunova Market
+# Lunova Secrets — virtual boutique
 
-A fresh way to shop: a browser-based, walkable 3D supermarket. **Phase 1 is a prototype.** All products, stock and prices are samples (USD). No payments, real orders, customer accounts or backend are enabled.
+A walkable lingerie boutique built with React, Vite, JavaScript, React Three Fiber / Three.js, Tailwind and Zustand. Grocery shelves have been replaced with brass clothing rails, featured-image displays, and stylized dress forms. **Demo only: no payments, customer accounts, live inventory or real orders.**
 
-## What is built
+## For the store owner
 
-- Procedural 3D supermarket with three shelves, store signs, lighting, floor, walls and plants; 10 sample products across produce, dairy, bakery, pantry and drinks.
-- First-person WASD/arrow movement, mouse drag, optional pointer lock, touch arrow pad, shelf/wall collision and aisle shortcuts.
-- Clickable shelf products and detail dialogs; persistent device-local demo bag with stock limits, quantity changes and removal.
-- Searchable product view for browsing without 3D, graphics settings and mobile layout.
+Open **Customize** above the 3D view (or **Customize boutique** in the sidebar).
 
-## Run locally or in Codex Cloud
+- **Add/edit products:** name, collection, price, sizes/note, description, featured image, garment color, and demo bag quantity limit.
+- **Display position:** choose a numbered display (1–12) or Catalog only. Two products cannot occupy one display. All products remain searchable in Product view.
+- **Presentation:** choose a featured photo on a clothing rail, or a stylized mannequin beside the featured photo. A mannequin shows a generic colored garment, not an exact 3D reproduction or virtual try-on. Upload a photo of a mannequin wearing your product if you want its actual appearance shown.
+- **Upload photo:** JPG, PNG or WebP, up to 10 MB; resized locally to 900px before saving. HTTPS image URLs are preferable for larger catalogs.
+- **Import from my website:** reads public WooCommerce product data from `https://lunovasecrets.com/wp-json/wc/store/v1/products`, paginating up to 500 products. Review the product count/currency before replacing the local catalog. Imports names, descriptions, featured image URLs, public prices, currency and product-page links. Collections are inferred from names/categories and can be corrected in the editor. First 12 products get 3D display positions; others are Catalog only.
+- **Import file:** accepts an exported Lunova catalog JSON or an array of public WooCommerce Store API product objects. If your host blocks cross-site API requests, open the public product data link shown in the editor, save the JSON from your browser, then import that file. A single API page contains at most 100 products; use direct website import for pagination.
+- **Export catalog:** download `lunova-catalog.json` to back up edits. Share this file with Codex to publish the collection for everyone by updating `src/data/catalog.json` on a reviewed branch.
+- **Currency:** imported from WooCommerce, or editable as a 3-letter currency code. Changing the code changes the label only; it does not convert prices.
 
-Use Node.js 22 or later and npm. From the existing checkout (cloud tasks are already isolated; no worktree needed):
+**Editor changes are stored only in your current browser.** They do not update WordPress or other visitors. The editor is deliberately public and local, not a secure admin dashboard. A shared, authenticated editing system is a future phase. Use Export before clearing browser data or changing devices. Catalog saves validate data and report storage errors without overwriting the last valid catalog.
+
+The bundled products are original placeholder lingerie illustrations, explicitly marked as samples; they are not claimed to be listings from your website. Live access from the development environment was blocked by its network policy. WooCommerce import has been tested with fixtures, not against the live source. Import stock is **not authoritative**: unavailable items get a zero demo cap; otherwise a default cap of ten is used. Prices can become stale after import. No checkout is enabled.
+
+## Run in Codex Cloud / locally
+
+Use Node.js 22+ and npm. Use the existing checkout; cloud tasks are already isolated and do not need a worktree.
 
 ```sh
 cd /workspace/Lunova
@@ -19,18 +29,13 @@ npm ci
 npm run dev -- --port 5173 --strictPort
 ```
 
-On your own computer, use your checkout path instead. Vite prints the development address. In Codex Cloud, validate with internal HTTP requests and browser tests; onboarding does not provide a public localhost preview. No environment variables, Supabase project or credentials are required for Phase 1. Files, fonts and 3D packaging are generated locally; the app makes no external API requests. The bag is stored in this browser's local storage under `lunova-demo-cart-v1`.
+On your own computer use your actual checkout path. No runtime variables, credentials, database or Supabase project are required. Runtime API import depends on the source site's public WooCommerce Store API and CORS policy. Never put WordPress passwords, WooCommerce consumer secrets or service-role keys in client code or VITE_* variables.
 
-### Controls
+### Controls and fallback
 
-- **Walk:** W/A/S/D or arrow keys. Touch devices: on-screen arrow pad.
-- **Look:** drag across the scene. Optional “Enter walk mode” captures the mouse; Esc releases it.
-- **Inspect:** click a product. In pointer-lock mode, the center dot is the aim point.
-- **Jump to an aisle:** desktop sidebar or the three inspiration cards.
-- **Reset:** curved arrow in the bottom-right of the scene returns to the entrance.
-- **Older device:** Settings → Lightweight. For no 3D, use Product view.
+WASD / arrow keys walk, dragging looks around, clicking a product photo or mannequin opens details. Touch devices have an arrow pad. Optional mouse capture uses “Enter walk mode”; Esc releases it. Collection shortcuts move to safe positions. The entrance reset restores the camera. Settings → Lightweight reduces resolution and disables shadows. Product view remains usable without 3D.
 
-### Checks
+### Validation
 
 ```sh
 npm test
@@ -38,32 +43,18 @@ npm run build
 npm run test:e2e
 ```
 
-Unit tests cover cart mutation/hydration, stock limits, cent-based totals, shelf collision, sliding and safe aisle destinations. Playwright starts its own Vite server and checks browser rendering, product interactions, persistence, search and mobile layout. It uses `/usr/bin/chromium` when available. To use another existing browser, set `PLAYWRIGHT_CHROMIUM_EXECUTABLE_PATH` to its executable. Otherwise install Chromium once:
+Unit tests validate cart mutation, edited/deleted product reconciliation, fixture collisions, safe spawns, catalog validation, image/link protocols, duplicate display prevention, and paginated WooCommerce data conversion. Browser tests cover rendered 3D product selection, movement/collision, mobile controls, bag persistence, search, editor CRUD/persistence and import success/failure with mocked source responses. Live catalog access and real-device performance are separate, unverified checks.
 
-```sh
-npx playwright install chromium
-```
+Playwright uses `/usr/bin/chromium` when available. Set `PLAYWRIGHT_CHROMIUM_EXECUTABLE_PATH` to another installed executable, or run `npx playwright install chromium`. CI installs its browser/dependencies. Headless Linux uses software WebGL. The Three.js chunk is large (~250KB compressed); the 3D scene is lazy-loaded. Hardware and accessibility review are still needed before a commercial launch.
 
-The browser tests use software WebGL flags in headless Linux. CI installs Chromium and OS dependencies with `npx playwright install --with-deps chromium`. A WebGL-capable browser is needed for the 3D scene; the catalog remains available if graphics fail. Hardware/mobile device testing is still required before production release.
+## Deployment and later hosting migration
 
-## Cloudflare Pages (owner setup, not deployed yet)
+The existing Cloudflare Pages project serves `https://lunova-8dy.pages.dev`; the owner is connecting `shop.lunovasecrets.com` through a CNAME. DNS/HTTPS activation has not been independently verified here. Git integration builds the approved `main` branch with `npm run build`, output `dist`, Node 22. Protect production merges with required CI/review. Feature branches can have Cloudflare preview deployments if enabled. A feature branch push does not establish that production has changed.
 
-1. Once this code is on GitHub, open **Cloudflare → Workers & Pages → Create application → Pages → Connect to Git**.
-2. Authorize GitHub and select **cybersolutionsgit/Lunova**.
-3. Select your approved production branch (normally `main`, after it exists). Choose **Vite**, build command **`npm run build`**, output directory **`dist`**, root directory **`/`**. Set **`NODE_VERSION` to `22`**. No other variables are needed for the demo.
-4. Review and select **Save and Deploy** when you want to publish. This task does not authorize deployment automatically.
-5. In GitHub **Settings → Rules → Rulesets**, protect the production branch: require a pull request and the **checks** CI job before merging; disable direct pushes where your plan supports it. Turn on Cloudflare preview deployments for feature branches if desired.
+`public/_headers` sets browser security headers. Images may load from HTTPS hosts; API fetches are limited to the Lunova Secrets origin(s). Remote photo servers must permit CORS for photos used as WebGL textures. If not, the 3D display reports photo unavailability while Product view can still display the image; uploading/local-copying licensed photos avoids that dependency. No credentials are sent by the public importer. Additional API origins require an intentional CSP update.
 
-Cloudflare's Git integration automatically rebuilds after an approved PR is merged into the configured production branch. GitHub/Cloudflare accounts, repository authorization and production deployment approval are owner actions. No API tokens are needed in this source tree. `public/_headers` provides conservative browser security headers, including a same-origin resource policy for this local-asset prototype. Revisit those rules when external APIs/assets are intentionally added.
+To migrate later: upload `dist` contents to static HTTPS hosting for the `shop` subdomain, verify it on a staging address, then change only that subdomain's DNS. Keep the WordPress site and email records intact. A future WooCommerce-backed system can keep products, orders and inventory in your existing hosting database. The present demo has **no server database** and does not require Cloudflare-specific application APIs.
 
-## Planned backend configuration — not required yet
+## Architecture and future work
 
-[Development roadmap](docs/ROADMAP.md) describes accounts, Supabase RLS, secure server-side checkout, inventory and admin phases. Do not configure fake keys. In Phase 2 the public client config will use `VITE_SUPABASE_URL` and `VITE_SUPABASE_PUBLISHABLE_KEY`; those are public client settings. Supabase secret/service-role keys belong only in trusted server environments, never VITE_* variables. Before accepting real orders, implement authenticated server-side price and inventory validation, atomic stock changes, order ownership policies and secure admin authorization, and obtain explicit owner approval.
-
-## Repository guide
-
-See [AGENTS.md](AGENTS.md) for architecture and conventions for future Codex sessions. [docs/ROADMAP.md](docs/ROADMAP.md) contains milestones and acceptance criteria. React + Vite + JavaScript, Three.js / React Three Fiber, Tailwind CSS and Zustand are used. Drei is available for future 3D helpers; Supabase integration is intentionally deferred until Phase 2.
-
-## Known prototype limits
-
-Procedural low-poly graphics, simplified axis-aligned collision and sample data; no physics interactions or photo-realistic models. Graphics settings reset when the app reloads. No delivery/taxes, live inventory, order processing, accounts, admin or analytics. Software-rendered tests establish browser functionality, not real-device frame rates. Public launch needs device/accessibility/security review and the later roadmap phases.
+See [AGENTS.md](AGENTS.md) for future Codex sessions, [docs/ROADMAP.md](docs/ROADMAP.md) for milestones, and [boutique screenshot](docs/boutique-desktop.png) for the current design. The older grocery prototype screenshot remains for history.

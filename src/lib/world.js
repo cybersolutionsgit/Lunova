@@ -1,14 +1,24 @@
-export const shelfCenters = [
-  [-5, -2],
-  [0, -2],
-  [5, -2],
+// Fixed fixture footprints keep movement safe even when products are reassigned.
+export const displays = [
+  { position: [0, 3], rotation: 0 },
+  { position: [-4.3, 1], rotation: 0 },
+  { position: [4.3, 1], rotation: 0 },
+  { position: [-7.8, -2], rotation: Math.PI / 2 },
+  { position: [7.8, -2], rotation: -Math.PI / 2 },
+  { position: [-4.3, -5], rotation: 0 },
+  { position: [0, -5], rotation: 0 },
+  { position: [4.3, -5], rotation: 0 },
+  { position: [-7.8, 4], rotation: Math.PI / 2 },
+  { position: [7.8, 4], rotation: -Math.PI / 2 },
+  { position: [-4.3, -8], rotation: 0 },
+  { position: [4.3, -8], rotation: 0 },
 ];
-export const colliders = shelfCenters.map(([x, z]) => ({
-  minX: x - 0.95,
-  maxX: x + 0.95,
-  minZ: z - 3.55,
-  maxZ: z + 3.95,
-}));
+export const colliders = displays.map(({ position: [x, z], rotation }) => {
+  const side = Math.abs(rotation) > 0.1;
+  const w = side ? 0.65 : 1.2,
+    d = side ? 1.2 : 0.65;
+  return { minX: x - w, maxX: x + w, minZ: z - d, maxZ: z + d };
+});
 export function canOccupy(x, z) {
   const r = 0.32;
   return (
@@ -23,7 +33,6 @@ export function canOccupy(x, z) {
   );
 }
 export function movePlayer(position, dx, dz) {
-  // Substeps prevent tunneling through shelves on slow frames.
   const n = Math.max(1, Math.ceil(Math.max(Math.abs(dx), Math.abs(dz)) / 0.12));
   let { x, z } = position;
   for (let i = 0; i < n; i++) {
@@ -34,9 +43,9 @@ export function movePlayer(position, dx, dz) {
 }
 export const aisleSpawns = {
   all: [0, 1.75, 9],
-  produce: [-7.3, 1.75, 3.5],
-  dairy: [-2.5, 1.75, 3.5],
-  bakery: [2.5, 1.75, 3.5],
-  pantry: [7.3, 1.75, 3.5],
-  drinks: [7.3, 1.75, -5.5],
+  sets: [0, 1.75, 6],
+  bras: [-4.3, 1.75, 4],
+  underwear: [4.3, 1.75, 4],
+  sleepwear: [-6, 1.75, 1],
+  robes: [6, 1.75, 1],
 };

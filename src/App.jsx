@@ -16,11 +16,12 @@ import {
   Search,
   Leaf,
   Grid2X2,
-  Apple,
-  Milk,
-  Croissant,
-  Package,
-  CupSoda,
+  Heart,
+  Sparkles,
+  Layers,
+  Moon,
+  Shirt,
+  Settings2,
   MapPin,
   SlidersHorizontal,
   Maximize,
@@ -37,101 +38,28 @@ import {
   Info,
   RotateCcw,
 } from "lucide-react";
-import { categories, products, money, productById } from "./lib/products";
-import { useCart, useWorld } from "./lib/store";
-import { cartTotals } from "./lib/cart";
-import { aisleSpawns } from "./lib/world";
+import {
+  categories,
+  money as formatMoney,
+  productById,
+  currencyScale,
+} from "./lib/products";
+import { useCart, useWorld, useCatalog } from "./lib/store";
+import { cartTotals, sanitizeCart } from "./lib/cart";
+import { aisleSpawns, displays } from "./lib/world";
 import { movement } from "./lib/controls";
+import Modal from "./components/Modal";
+import ProductArt from "./components/ProductArt";
+import CatalogEditor from "./components/CatalogEditor";
 const StoreScene = lazy(() => import("./components/StoreScene"));
 const icons = {
   grid: Grid2X2,
-  apple: Apple,
-  milk: Milk,
-  bread: Croissant,
-  package: Package,
-  cup: CupSoda,
+  heart: Heart,
+  sparkles: Sparkles,
+  layers: Layers,
+  moon: Moon,
+  shirt: Shirt,
 };
-function ProductArt({ product, small = false }) {
-  return (
-    <div
-      className={`product-art ${small ? "small" : ""}`}
-      style={{ "--product": product.color, "--accent": product.accent }}
-      aria-hidden="true"
-    >
-      <div className={`pack ${product.shape}`}>
-        <span className="pack-brand">LUNOVA</span>
-        <span className="pack-emoji">{product.emoji}</span>
-        <span className="pack-label">{product.label}</span>
-      </div>
-    </div>
-  );
-}
-function Modal({ title, children, onClose, wide = false }) {
-  const ref = useRef();
-  useEffect(() => {
-    const prev = document.activeElement;
-    ref.current?.focus();
-    const key = (e) => {
-      if (e.key === "Escape") onClose();
-      if (e.key === "Tab") {
-        const list = ref.current.querySelectorAll(
-          'button,input,select,[tabindex="0"]',
-        );
-        if (!list.length) {
-          e.preventDefault();
-          return;
-        }
-        const first = list[0],
-          last = list[list.length - 1];
-        if (
-          e.shiftKey &&
-          (document.activeElement === first ||
-            document.activeElement === ref.current)
-        ) {
-          e.preventDefault();
-          last.focus();
-        } else if (!e.shiftKey && document.activeElement === last) {
-          e.preventDefault();
-          first.focus();
-        }
-      }
-    };
-    document.addEventListener("keydown", key);
-    return () => {
-      document.removeEventListener("keydown", key);
-      prev?.focus();
-    };
-  }, [onClose]);
-  return (
-    <div
-      className="modal-backdrop"
-      onPointerDown={(e) => {
-        if (e.target === e.currentTarget) onClose();
-      }}
-    >
-      <section
-        ref={ref}
-        tabIndex={-1}
-        role="dialog"
-        aria-modal="true"
-        aria-label={title}
-        className={`modal ${wide ? "wide" : ""}`}
-      >
-        <header>
-          <h2>{title}</h2>
-          <button
-            className="icon-button"
-            onClick={onClose}
-            aria-label="Close dialog"
-          >
-            <X size={20} />
-          </button>
-        </header>
-        {children}
-      </section>
-    </div>
-  );
-}
 export default function App() {
   const {
     category,
@@ -147,10 +75,13 @@ export default function App() {
     notice,
     notify,
   } = useWorld();
-  const items = useCart((s) => s.items),
+  const { products, currency, source } = useCatalog();
+  const money = (value) => formatMoney(value, currency);
+  const savedItems = useCart((s) => s.items),
     add = useCart((s) => s.add),
     change = useCart((s) => s.change);
-  const { count, subtotal } = cartTotals(items);
+  const items = sanitizeCart(savedItems, products);
+  const { count, subtotal } = cartTotals(items, products, currency);
   const [query, setQuery] = useState(""),
     [view, setView] = useState("explore"),
     [fullscreen, setFullscreen] = useState(false);
@@ -158,15 +89,18 @@ export default function App() {
   const markerRef = useRef();
   const updatePosition = useCallback((x, z) => {
     if (markerRef.current) {
-      markerRef.current.style.transform = `translate(${x * 3}px,${(z - 9) * 2.1}px)`;
+      markerRef.current.setAttribute(
+        "transform",
+        `translate(${x * 2},${(z - 9) * 2})`,
+      );
       markerRef.current.dataset.x = x.toFixed(2);
       markerRef.current.dataset.z = z.toFixed(2);
     }
   }, []);
-  const close = () => {
+  const close = useCallback(() => {
     select(null);
     setModal(null);
-  };
+  }, [select, setModal]);
   useEffect(() => {
     if (!notice) return;
     const t = setTimeout(() => notify(""), 2600);
@@ -184,7 +118,7 @@ export default function App() {
   );
   function addItem(p) {
     if ((items[p.id] || 0) >= p.stock) {
-      notify("Sample stock limit reached");
+      notify("Demo quantity limit reached");
       return;
     }
     add(p.id);
@@ -192,7 +126,7 @@ export default function App() {
   }
   function visit(id) {
     setCategory(id);
-    goTo(aisleSpawns[id]);
+    goTo(aisleSpawns[id] || aisleSpawns.all);
     setView("explore");
   }
   async function immersive() {
@@ -230,7 +164,7 @@ export default function App() {
           lunova<span className="brand-dot">®</span>
         </a>
         <div className="store-label">
-          <span className="live-dot" /> THE VIRTUAL MARKET
+          <span className="live-dot" /> THE INTIMATE BOUTIQUE
         </div>
         <div className="sidebar-heading">YOUR STORE, REIMAGINED</div>
         <button
@@ -246,12 +180,12 @@ export default function App() {
           onClick={() => setView("browse")}
         >
           <Grid2X2 size={18} />
-          Browse products<span className="nav-count">10</span>
+          Browse products<span className="nav-count">{products.length}</span>
         </button>
         <div className="sidebar-heading aisles-heading">
-          SHOP BY AISLE <span>06</span>
+          SHOP BY COLLECTION <span>06</span>
         </div>
-        <nav aria-label="Product aisles">
+        <nav aria-label="Product collections">
           {categories.map((c) => {
             const Icon = icons[c.icon];
             return (
@@ -269,41 +203,47 @@ export default function App() {
             );
           })}
         </nav>
+        <button
+          className="nav-main customize-nav"
+          onClick={() => setModal("editor")}
+        >
+          <Settings2 size={18} />
+          Customize boutique
+        </button>
         <div className="sidebar-bottom">
           <div className="little-card">
             <span className="leaf-circle">
               <Leaf size={21} />
             </span>
             <h3>
-              A little more local.
-              <br />A lot more lovely.
+              Made for your
+              <br />
+              kind of beautiful.
             </h3>
             <p>
-              Everyday essentials.
+              Lingerie. Lounge. Layers.
               <br />A whole new experience.
             </p>
-            <span className="card-drawing">✳</span>
+            <span className="card-drawing">✧</span>
           </div>
           <button className="help-button" onClick={() => setModal("help")}>
             <Info size={17} />
             First time here?
             <ArrowUpRight size={15} />
           </button>
-          <div className="sidebar-footer">
-            Thoughtfully stocked. Virtually yours.
-          </div>
+          <div className="sidebar-footer">Your collection. Your boutique.</div>
         </div>
       </aside>
       <main>
         <header className="topbar">
           <div className="location">
             <MapPin size={16} />
-            <span>The neighborhood store</span>
+            <span>Lunova Secrets boutique</span>
             <span className="location-pill">Demo experience</span>
           </div>
           <div className="topbar-actions">
             <span className="secure-label">
-              <Leaf size={14} /> Fresh perspectives, daily
+              <Leaf size={14} /> An intimate world, reimagined
             </span>
             <button className="bag-button" onClick={() => setModal("cart")}>
               <ShoppingBag size={17} />
@@ -314,7 +254,7 @@ export default function App() {
         </header>
         <div className="page-content">
           <div className="breadcrumb">
-            The market <ChevronRight size={13} />
+            The boutique <ChevronRight size={13} />
             <span>
               {view === "explore" ? "Explore in 3D" : "Browse products"}
             </span>
@@ -322,16 +262,13 @@ export default function App() {
           <div className="page-heading">
             <div>
               <div className="eyebrow">
-                <span /> A FRESH WAY TO SHOP
+                <span /> AN INTIMATE NEW PERSPECTIVE
               </div>
               <h1>
-                Your everyday shop.
-                <br className="mobile-break" /> <em>Anything but ordinary.</em>
+                Your private boutique.
+                <br className="mobile-break" /> <em>Uniquely yours.</em>
               </h1>
-              <p>
-                Take a little wander. Find your favorites. Make yourself at
-                home.
-              </p>
+              <p>Discover your collection in a space designed around you.</p>
             </div>
             <button className="text-link" onClick={() => setModal("help")}>
               How to explore
@@ -356,8 +293,16 @@ export default function App() {
               </button>
             </div>
             <div className="toolbar-actions">
+              <button
+                className="settings-button editor-open-button"
+                onClick={() => setModal("editor")}
+              >
+                <Settings2 size={16} />
+                <span>Customize</span>
+              </button>
               <span className="sample-label">
-                <span className="live-dot" /> Sample store · 10 products
+                <span className="live-dot" /> Boutique demo · {products.length}{" "}
+                products
               </span>
               <button
                 className="settings-button"
@@ -369,10 +314,23 @@ export default function App() {
               </button>
             </div>
           </div>
+          <div className="catalog-status">
+            <span>
+              {source === "woocommerce"
+                ? "Imported website catalog · local demo copy"
+                : source === "custom"
+                  ? "Your custom browser catalog · demo only"
+                  : "Illustrative lingerie samples · your website products are not imported yet"}
+            </span>
+            <button onClick={() => setModal("editor")}>
+              {source !== "sample" ? "Edit collection" : "Import your products"}
+              <ArrowUpRight size={13} />
+            </button>
+          </div>
           <section
             className={`world-container ${view === "browse" ? "catalog-mode" : ""}`}
             ref={worldRef}
-            aria-label="Virtual market"
+            aria-label="Virtual boutique"
           >
             {view === "explore" ? (
               <>
@@ -380,7 +338,7 @@ export default function App() {
                   fallback={
                     <div className="scene-loading">
                       <Leaf />
-                      Setting the shelves…
+                      Opening your boutique…
                     </div>
                   }
                 >
@@ -400,8 +358,10 @@ export default function App() {
                 </div>
                 <div className="scene-greeting">
                   <span>WELCOME TO YOUR</span>
-                  <h2>happy place.</h2>
-                  <p>Good food. Great finds. Just a few steps away.</p>
+                  <h2>secret world.</h2>
+                  <p>
+                    Lingerie, beautifully displayed. Explore at your own pace.
+                  </p>
                 </div>
                 <div className="crosshair" aria-hidden="true" />
                 <div className="scene-controls">
@@ -426,15 +386,30 @@ export default function App() {
                   </button>
                 </div>
                 <div className="minimap" aria-hidden="true">
-                  <span>THE MARKET</span>
-                  <div className="map-shelves">
-                    <i />
-                    <i />
-                    <i />
-                  </div>
-                  <b ref={markerRef} data-testid="player-marker">
-                    ◉
-                  </b>
+                  <span>THE BOUTIQUE</span>
+                  <svg viewBox="0 0 60 64" className="boutique-map">
+                    {displays.map((d, i) => (
+                      <rect
+                        key={i}
+                        x={d.position[0] * 2 + 28}
+                        y={d.position[1] * 2 + 27}
+                        width="4"
+                        height="4"
+                        rx="1"
+                        fill="#d4b4bc"
+                      />
+                    ))}
+                    <g ref={markerRef} data-testid="player-marker">
+                      <circle
+                        cx="30"
+                        cy="47"
+                        r="2.5"
+                        fill="#9e647e"
+                        stroke="#fff7f2"
+                        strokeWidth="1"
+                      />
+                    </g>
+                  </svg>
                   <small>ENTRANCE</small>
                 </div>
                 <div className="touch-pad" aria-label="Touch movement controls">
@@ -534,46 +509,46 @@ export default function App() {
             <span>
               <span className="live-dot" />{" "}
               {view === "explore"
-                ? "A whole store to discover"
-                : "Everyday favorites, thoughtfully selected"}
+                ? "A whole boutique to discover"
+                : "Your collection, beautifully displayed"}
             </span>
             <span>
-              Made for exploring. Built for you. <Leaf size={14} />
+              Made for you. Styled by you. <Leaf size={14} />
             </span>
           </div>
           <section className="discovery-row">
             <div className="discovery-intro">
-              <span className="eyebrow">A LITTLE INSPIRATION</span>
+              <span className="eyebrow">CURATED COLLECTIONS</span>
               <h2>
-                Good things,
+                Beautiful details,
                 <br />
-                <em>in every aisle.</em>
+                <em>in every piece.</em>
               </h2>
               <p>
-                Your daily essentials, with
-                <br />a little extra delight.
+                Your signature pieces, with
+                <br />a little extra confidence.
               </p>
             </div>
             {[
               {
-                p: products[0],
-                title: "Fresh from nature",
-                sub: "Fruit & vegetables",
-                category: "produce",
+                p: products.find((p) => p.category === "sets"),
+                title: "The signature collection",
+                sub: "Lingerie sets",
+                category: "sets",
                 className: "fresh",
               },
               {
-                p: products[4],
-                title: "The comfort corner",
-                sub: "Bakery favorites",
-                category: "bakery",
+                p: products.find((p) => p.category === "bras"),
+                title: "Beautiful foundations",
+                sub: "Bras & bralettes",
+                category: "bras",
                 className: "baked",
               },
               {
-                p: products[8],
-                title: "A sip of something good",
-                sub: "Drinks & refreshments",
-                category: "drinks",
+                p: products.find((p) => p.category === "sleepwear"),
+                title: "After-hours elegance",
+                sub: "Sleepwear & lounge",
+                category: "sleepwear",
                 className: "drinks",
               },
             ].map((card) => (
@@ -586,19 +561,20 @@ export default function App() {
                   <span>{card.sub}</span>
                   <h3>{card.title}</h3>
                   <span className="discover-link">
-                    Explore aisle <ArrowUpRight size={15} />
+                    Explore collection <ArrowUpRight size={15} />
                   </span>
                 </div>
-                <span className="discovery-emoji" aria-hidden="true">
-                  {card.p.emoji}
+                <span className="discovery-photo" aria-hidden="true">
+                  {card.p && <ProductArt product={card.p} />}
                 </span>
               </button>
             ))}
           </section>
           <footer className="page-footer">
-            <span>© {new Date().getFullYear()} Lunova Market</span>
+            <span>© {new Date().getFullYear()} Lunova Secrets</span>
             <span>
-              Prototype only. Sample prices in USD. No real orders or payments.
+              Prototype only. Prices are for demonstration. No real orders or
+              payments.
             </span>
             <button onClick={() => setModal("about")}>
               About this experience <ArrowUpRight size={12} />
@@ -612,11 +588,22 @@ export default function App() {
             <ProductArt product={selected} />
             <span className="detail-tag">{selected.tag}</span>
             <h2>{selected.name}</h2>
-            <p className="detail-unit">{selected.unit} · Sample product</p>
+            <p className="detail-unit">{selected.unit} · Demo bag only</p>
             <p>{selected.description}</p>
+            {selected.sourceUrl && (
+              <a
+                className="source-product-link"
+                href={selected.sourceUrl}
+                target="_blank"
+                rel="noreferrer"
+              >
+                View original product on Lunova Secrets
+                <ArrowUpRight size={14} />
+              </a>
+            )}
             <div className="detail-price">
               <strong>{money(selected.price)}</strong>
-              <span>{selected.stock} available in demo</span>
+              <span>{selected.stock} demo bag limit</span>
             </div>
             <button
               className="primary-button"
@@ -625,11 +612,16 @@ export default function App() {
             >
               <ShoppingBag size={18} />
               {(items[selected.id] || 0) >= selected.stock
-                ? "Sample stock limit reached"
+                ? "Demo quantity limit reached"
                 : "Add to my bag"}
               <Plus size={18} />
             </button>
           </div>
+        </Modal>
+      )}
+      {modal === "editor" && (
+        <Modal title="Customize your boutique" onClose={close} wide>
+          <CatalogEditor />
         </Modal>
       )}
       {modal === "cart" && (
@@ -649,7 +641,7 @@ export default function App() {
               <>
                 <div className="cart-items">
                   {Object.entries(items).map(([id, q]) => {
-                    const p = productById(id);
+                    const p = productById(id, products);
                     return (
                       <div className="cart-item" key={id}>
                         <ProductArt product={p} small />
@@ -689,8 +681,8 @@ export default function App() {
                   })}
                 </div>
                 <div className="cart-total">
-                  <span>Sample subtotal</span>
-                  <b>{money(subtotal / 100)}</b>
+                  <span>Demo subtotal</span>
+                  <b>{money(subtotal / currencyScale(currency))}</b>
                 </div>
                 <div className="demo-note">
                   <Info size={18} />
@@ -732,13 +724,16 @@ export default function App() {
             </div>
             <div className="demo-note">
               <VolumeX size={18} />
-              <p>This prototype has no sound and uses no external 3D assets.</p>
+              <p>
+                This prototype has no sound. Product photos appear on display
+                rails; mannequin garments are stylized.
+              </p>
             </div>
           </div>
         </Modal>
       )}
       {modal === "help" && (
-        <Modal title="A little guide to your market" onClose={close}>
+        <Modal title="A little guide to your boutique" onClose={close}>
           <div className="help-content">
             <div>
               <Keyboard />
@@ -755,9 +750,9 @@ export default function App() {
               <section>
                 <h3>Look around. Find a favorite.</h3>
                 <p>
-                  Drag anywhere in the store to look around. Click a product on
-                  a shelf to see its details. Walk mode locks the mouse; press
-                  Esc to release it.
+                  Drag anywhere in the store to look around. Click a product
+                  photo or mannequin to see its details. Walk mode locks the
+                  mouse; press Esc to release it.
                 </p>
               </section>
             </div>
@@ -792,9 +787,10 @@ export default function App() {
         <Modal title="Meet Lunova" onClose={close}>
           <div className="help-content">
             <p>
-              A fresh way to experience your neighborhood supermarket. This is
-              Phase 1: a virtual market prototype with sample products and a
-              saved demo shopping bag.
+              A virtual lingerie boutique for Lunova Secrets, with
+              featured-image displays, stylized mannequins, and a saved demo
+              shopping bag. Customize the collection in this browser, or import
+              your public WooCommerce catalog.
             </p>
             <p>
               Accounts, live inventory, secure ordering, and admin tools are
@@ -802,7 +798,7 @@ export default function App() {
               no payments or real orders are accepted.
             </p>
             <button className="primary-button" onClick={close}>
-              Back to the market
+              Back to the boutique
               <ArrowRight size={17} />
             </button>
           </div>
