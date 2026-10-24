@@ -1,4 +1,4 @@
-import seed from "../data/catalog.json" with { type: "json" };
+import seed from "../data/catalog.js";
 export const categories = [
   { id: "all", name: "All collections", icon: "grid" },
   { id: "sets", name: "Lingerie sets", icon: "heart" },
@@ -19,4 +19,4 @@ export const currencyScale = (currency = "USD") =>
   new Intl.NumberFormat("en", { style: "currency", currency }).resolvedOptions()
     .maximumFractionDigits;
 
-export { default as sampleCatalog } from "../data/sample-catalog.json" with { type: "json" };
+export { default as sampleCatalog } from "../data/sample-catalog.js";

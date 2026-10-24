@@ -66,3 +66,9 @@ npm run dev:cms
 `wrangler.local.jsonc` configures only the local DB migration command (database local-DB), with no production database ID. Pages dev uses the supported --d1 DB CLI flag. In restricted cloud machines use a writable XDG_CONFIG_HOME and WRANGLER_LOG_PATH. The local runtime serves the build and API on port 8788 and persists SQLite under ignored `.wrangler/state`. `.dev.vars` is ignored; never commit it. The ordinary `npm run dev` is still useful for frontend-only work but does not start the admin API; the customer view falls back to bundled products and admin reports missing setup.
 
 Checks: `npm test`, `npm run build`, `npm run build:functions`, `npm run test:e2e`. Node tests exercise real local D1 via Miniflare. Browser UI tests use a fixture API; a combined local Pages/D1 browser check is also needed for runtime integration. Never substitute a mocked UI login for a server authorization test.
+
+### Pages Functions compiler compatibility
+
+The hosted Pages Functions builder may use Wrangler 3 even when the local development dependency is newer. Catalog seed data is stored in plain JavaScript default-export modules in src/data to work with both builders. The CMS still imports and exports JSON files. Do not add JSON import attributes to shared modules used by Functions.
+
+CI also runs npm run build:functions:pages with the hosted builder version (Wrangler 3.114.17), in addition to the modern local Functions build, to catch this incompatibility before deployment.

@@ -8,7 +8,7 @@ Lunova Secrets is a browser-based 3D lingerie boutique, replacing the original g
 
 - `src/App.jsx`: immersive viewport shell with a permanently mounted scene, collapsible overlay sidebar, popup catalog/details/cart/settings and guidance.
 - `src/components/StoreScene.jsx`: procedural clothing rails, photo panels, stylized mannequin forms, textures, frame-based player controls, graphics fallback.
-- `src/lib/products.js`: collection definitions, default JSON catalog and currency formatting. `src/data/catalog.json` is the published snapshot of 21 real WooCommerce products in PKR. `src/data/sample-catalog.json` retains the original eight labelled samples.
+- `src/lib/products.js`: collection definitions, default catalog data module and currency formatting. `src/data/catalog.js` is the published snapshot of 21 real WooCommerce products in PKR. `src/data/sample-catalog.js` retains the original eight labelled samples.
 - `src/lib/world.js`: 12 fixed display footprints, bounded movement with substeps, safe collection positions.
 - `src/lib/controls.js`: transient touch movement shared with the render loop.
 - `src/lib/cart.js`: pure cart validation, stock caps and integer-cent totals.
@@ -44,3 +44,5 @@ No secrets in source, logs, scripts, commits, screenshots, or chat. Local .dev.v
 Keep CPU/GPU work bounded, cap device pixel ratio, reuse geometry/materials/textures, use simple shapes and no unnecessary physics library. Default desktop mouse look uses uncaptured pointer motion over the canvas, not drag; touch retains dragging. Pause movement/look while sidebar/catalog/dialogs are open. UI pointer events must not rotate the camera. Never unmount the scene when opening catalog/details, and do not exit fullscreen to show dialogs. Movement must be frame-rate independent and collider data must stay in sync with display fixture placement. Touch and keyboard controls need equivalent functionality. A 2D catalog is always available. Any added model/texture must have a compatible license and documented source.
 
 Development dependency overrides keep Miniflare’s Sharp/Undici on patched compatible versions. npm audit was checked; retest backend and Functions builds when changing these overrides. Do not weaken TLS/signature verification to install tools.
+
+Cloudflare Pages uses an older Functions bundler (Wrangler 3.114.17). Keep shared catalog seed modules as plain JavaScript default exports; do not reintroduce JSON import attributes (`with { type: "json" }`) into the Functions import graph. CMS JSON import/export remains supported.
