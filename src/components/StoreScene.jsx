@@ -472,17 +472,27 @@ function Player({ enabled, onPosition }) {
         dx = e.movementX;
         dy = e.movementY;
       } else if (e.pointerType === "mouse") {
-        if (e.target !== gl.domElement) {
-          hover.current = null;
-          return;
-        }
-        if (!hover.current) {
-          hover.current = { x: e.clientX, y: e.clientY };
-          return;
-        }
-        dx = e.clientX - hover.current.x;
-        dy = e.clientY - hover.current.y;
-        hover.current = { x: e.clientX, y: e.clientY };
+        if (e.target !== gl.domElement) return;
+        const bounds = gl.domElement.getBoundingClientRect();
+        const x = THREE.MathUtils.clamp(
+          ((e.clientX - bounds.left) / bounds.width) * 2 - 1,
+          -1,
+          1,
+        );
+        const y = THREE.MathUtils.clamp(
+          ((e.clientY - bounds.top) / bounds.height) * 2 - 1,
+          -1,
+          1,
+        );
+        // Absolute screen position gives a repeatable full panorama, even after
+        // leaving the canvas or closing a menu. Screen centre always faces front.
+        yaw.current = -x * Math.PI;
+        pitch.current = THREE.MathUtils.clamp(-0.05 - y * 1.1, -1.15, 1.15);
+        // Keep product raycasting aligned even when a click follows this event
+        // before the next animation frame.
+        camera.rotation.set(pitch.current, yaw.current, 0);
+        camera.updateMatrixWorld();
+        return;
       } else if (drag.current && drag.current.id === e.pointerId) {
         dx = e.clientX - drag.current.x;
         dy = e.clientY - drag.current.y;
@@ -512,6 +522,7 @@ function Player({ enabled, onPosition }) {
     window.addEventListener("pointermove", move);
     gl.domElement.addEventListener("pointerdown", start);
     gl.domElement.addEventListener("pointerleave", leave);
+    gl.domElement.addEventListener("pointerenter", move);
     window.addEventListener("pointerup", stop);
     window.addEventListener("pointercancel", clear);
     return () => {
@@ -523,10 +534,11 @@ function Player({ enabled, onPosition }) {
       window.removeEventListener("pointermove", move);
       gl.domElement.removeEventListener("pointerdown", start);
       gl.domElement.removeEventListener("pointerleave", leave);
+      gl.domElement.removeEventListener("pointerenter", move);
       window.removeEventListener("pointerup", stop);
       window.removeEventListener("pointercancel", clear);
     };
-  }, [blocked, gl, setLocked]);
+  }, [blocked, gl, camera, setLocked]);
   useFrame((_, dt) => {
     if (blocked) return;
     const k = keys.current;

@@ -93,7 +93,10 @@ test("desktop look stays centred, menus release capture and returning resumes wi
   await page.getByRole("button", { name: "Close dialog", exact: true }).click();
   await page.mouse.move(820, 450);
   await page.waitForTimeout(200);
-  expect(await canvas.getAttribute("data-look-yaw")).toBe(yaw);
+  await expect
+    .poll(async () => Number(await canvas.getAttribute("data-look-yaw")))
+    .toBeCloseTo(-((820 / 1280) * 2 - 1) * Math.PI, 2);
+  const alignedYaw = await canvas.getAttribute("data-look-yaw");
   await page
     .getByRole("button", { name: "Click to look around", exact: true })
     .click();
@@ -109,9 +112,11 @@ test("desktop look stays centred, menus release capture and returning resumes wi
   });
   await expect
     .poll(async () => Number(await canvas.getAttribute("data-look-yaw")))
-    .not.toBe(Number(yaw));
+    .not.toBe(Number(alignedYaw));
   expect(
-    Math.abs(Number(await canvas.getAttribute("data-look-yaw")) - Number(yaw)),
+    Math.abs(
+      Number(await canvas.getAttribute("data-look-yaw")) - Number(alignedYaw),
+    ),
   ).toBeLessThan(0.1);
 });
 test("product popups remain inside browser full screen", async ({ page }) => {
@@ -370,28 +375,63 @@ test("mobile taps still select 3D products with full-screen joystick enabled", a
   await context.close();
 });
 
-test("desktop hover works without capture and holding the mouse pauses it", async ({
+test("cursor position maps to a full panorama and realigns after leaving or closing a menu", async ({
   page,
 }) => {
+  await page.setViewportSize({ width: 1280, height: 720 });
   await page.goto("/");
   const canvas = page.getByTestId("store-canvas");
   await expect(canvas).toHaveAttribute("data-look-yaw", "0");
-  await page.mouse.move(500, 650);
-  await page.mouse.move(600, 650, { steps: 4 });
+  await page.mouse.move(640, 360);
   await expect
     .poll(async () => Number(await canvas.getAttribute("data-look-yaw")))
-    .toBeLessThan(-0.2);
+    .toBeCloseTo(0, 2);
+  await page.mouse.move(960, 360);
+  await expect
+    .poll(async () => Number(await canvas.getAttribute("data-look-yaw")))
+    .toBeCloseTo(-Math.PI / 2, 2);
+  await page.mouse.move(320, 360);
+  await expect
+    .poll(async () => Number(await canvas.getAttribute("data-look-yaw")))
+    .toBeCloseTo(Math.PI / 2, 2);
+  // Leave to a UI element, then re-enter at the opposite side in one event.
+  await page
+    .getByRole("button", { name: "Store controls", exact: true })
+    .hover();
+  await page.mouse.move(960, 360);
+  await expect
+    .poll(async () => Number(await canvas.getAttribute("data-look-yaw")))
+    .toBeCloseTo(-Math.PI / 2, 2);
   await page.mouse.down();
-  const held = await canvas.getAttribute("data-look-yaw");
-  await page.mouse.move(800, 650, { steps: 4 });
+  await page.mouse.move(800, 360);
   await page.waitForTimeout(150);
-  expect(await canvas.getAttribute("data-look-yaw")).toBe(held);
+  expect(Number(await canvas.getAttribute("data-look-yaw"))).toBeCloseTo(
+    -Math.PI / 2,
+    2,
+  );
   await page.mouse.up();
-  await page.mouse.move(810, 650);
+  await page.mouse.move(810, 360);
   await expect
     .poll(async () => Number(await canvas.getAttribute("data-look-yaw")))
-    .toBeLessThan(Number(held));
-  expect(
-    Math.abs(Number(await canvas.getAttribute("data-look-yaw")) - Number(held)),
-  ).toBeLessThan(0.05);
+    .toBeCloseTo(-((810 / 1280) * 2 - 1) * Math.PI, 2);
+  await page
+    .getByRole("button", { name: "Store controls", exact: true })
+    .click();
+  await page
+    .getByRole("button", { name: "Graphics settings", exact: true })
+    .click();
+  const paused = await canvas.getAttribute("data-look-yaw");
+  await page.mouse.move(320, 360);
+  expect(await canvas.getAttribute("data-look-yaw")).toBe(paused);
+  await page.getByRole("button", { name: "Close dialog", exact: true }).click();
+  await page.mouse.move(640, 360);
+  await expect
+    .poll(async () => Number(await canvas.getAttribute("data-look-yaw")))
+    .toBeCloseTo(0, 2);
+  await page.mouse.move(1270, 360);
+  await expect
+    .poll(async () =>
+      Math.abs(Number(await canvas.getAttribute("data-look-yaw"))),
+    )
+    .toBeGreaterThan(3);
 });
