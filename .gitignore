@@ -6,3 +6,7 @@ dist/
 playwright-report/
 test-results/
 *.log
+.dev.vars
+.dev.vars.*
+!.dev.vars.example
+.wrangler/

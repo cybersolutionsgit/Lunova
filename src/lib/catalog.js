@@ -1,7 +1,8 @@
-import { categories, currencyScale } from "./products.js";
+import { currencyScale } from "./products.js";
+import { allCategories as categories } from "./shop.js";
 export const CATALOG_KEY = "lunova-boutique-catalog-v1";
 export const MAX_PRODUCTS = 500;
-export const MAX_CATALOG_CHARS = 4000000;
+export const MAX_CATALOG_CHARS = 1500000;
 export function safeImage(value) {
   if (typeof value !== "string" || value.length > 900000) return "";
   if (/^\/(?!\/)[^\\\s]*$/.test(value)) return value;
@@ -121,7 +122,7 @@ export function validateCatalog(input) {
   };
   if (JSON.stringify(result).length > MAX_CATALOG_CHARS)
     fail(
-      "This catalog is too large for browser storage. Use image URLs or smaller photos.",
+      "This catalog is too large for the shared store. Use image URLs or smaller photos.",
     );
   return result;
 }

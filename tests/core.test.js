@@ -214,3 +214,41 @@ test("published catalog uses the supplied 21 real PKR products and featured imag
     12,
   );
 });
+test("new store categories and settings validate without silently deleting old collections", async () => {
+  const {
+    STORE_TYPES,
+    defaultSettings,
+    validateSettings,
+    getCollections,
+    contrastColor,
+  } = await import("../src/lib/shop.js");
+  assert.equal(Object.keys(STORE_TYPES).length, 9);
+  for (const type of Object.keys(STORE_TYPES)) {
+    assert.equal(validateSettings({ ...defaultSettings, type }).type, type);
+    assert.ok(getCollections(type, products).some((c) => c.id === "sets"));
+  }
+  assert.throws(() =>
+    validateSettings({ ...defaultSettings, type: "unknown" }),
+  );
+  assert.throws(() =>
+    validateSettings({
+      ...defaultSettings,
+      theme: { ...defaultSettings.theme, primary: "javascript:bad" },
+    }),
+  );
+  assert.equal(contrastColor("#ffffff"), "#281f27");
+  assert.equal(contrastColor("#000000"), "#ffffff");
+});
+test("cart hydration defers unknown product pruning until the shared catalog loads", async () => {
+  const { hydrateCart } = await import("../src/lib/cart.js");
+  assert.deepEqual(
+    hydrateCart({
+      "new-shared-product": 2,
+      bad: "3",
+      negative: -1,
+      huge: 10000,
+    }),
+    { "new-shared-product": 2 },
+  );
+  assert.deepEqual(hydrateCart(null), {});
+});

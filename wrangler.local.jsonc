@@ -1,0 +1,12 @@
+{
+  "$schema": "node_modules/wrangler/config-schema.json",
+  "name": "lunova-local",
+  "pages_build_output_dir": "dist",
+  "compatibility_date": "2026-10-24",
+  "d1_databases": [
+    {
+      "binding": "DB",
+      "database_name": "local-DB",
+    },
+  ],
+}

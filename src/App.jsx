@@ -22,6 +22,8 @@ import {
   Moon,
   Shirt,
   Settings2,
+  ShieldCheck,
+  Package,
   MapPin,
   SlidersHorizontal,
   Maximize,
@@ -39,7 +41,6 @@ import {
   RotateCcw,
 } from "lucide-react";
 import {
-  categories,
   money as formatMoney,
   productById,
   currencyScale,
@@ -50,7 +51,8 @@ import { aisleSpawns, displays } from "./lib/world";
 import { movement } from "./lib/controls";
 import Modal from "./components/Modal";
 import ProductArt from "./components/ProductArt";
-import CatalogEditor from "./components/CatalogEditor";
+import { getCollections, STORE_TYPES, contrastColor } from "./lib/shop";
+const AdminPanel = lazy(() => import("./components/AdminPanel"));
 const StoreScene = lazy(() => import("./components/StoreScene"));
 const icons = {
   grid: Grid2X2,
@@ -59,6 +61,7 @@ const icons = {
   layers: Layers,
   moon: Moon,
   shirt: Shirt,
+  package: Package,
 };
 export default function App() {
   const {
@@ -75,7 +78,11 @@ export default function App() {
     notice,
     notify,
   } = useWorld();
-  const { products, currency, source } = useCatalog();
+  const { products, currency, settings, initialize } = useCatalog();
+  const categories = getCollections(settings.type, products);
+  useEffect(() => {
+    initialize();
+  }, [initialize]);
   const money = (value) => formatMoney(value, currency);
   const savedItems = useCart((s) => s.items),
     add = useCart((s) => s.add),
@@ -186,7 +193,15 @@ export default function App() {
     return () => document.removeEventListener("keydown", onKey);
   }, [sidebarOpen]);
   return (
-    <main className={`store-shell ${sidebarOpen ? "sidebar-is-open" : ""}`}>
+    <main
+      className={`store-shell ${sidebarOpen ? "sidebar-is-open" : ""}`}
+      style={{
+        "--shop-primary": settings.theme.primary,
+        "--shop-surface": settings.theme.surface,
+        "--shop-on-primary": contrastColor(settings.theme.primary),
+        "--shop-on-surface": contrastColor(settings.theme.surface),
+      }}
+    >
       <section
         ref={worldRef}
         className="world-container immersive-world"
@@ -216,8 +231,8 @@ export default function App() {
         </div>
         <div className="scene-greeting">
           <span>WELCOME TO YOUR</span>
-          <h2>secret world.</h2>
-          <p>Lingerie, beautifully displayed. Explore at your own pace.</p>
+          <h2>{settings.name}</h2>
+          <p>{settings.description.slice(0, 130)}</p>
         </div>
         <div className="crosshair" aria-hidden="true" />
         <div className="scene-controls">
@@ -238,7 +253,7 @@ export default function App() {
           </button>
         </div>
         <div className="minimap" aria-hidden="true">
-          <span>THE BOUTIQUE</span>
+          <span>{STORE_TYPES[settings.type].name.toUpperCase()}</span>
           <svg viewBox="0 0 60 64" className="boutique-map">
             {displays.map((d, i) => (
               <rect
@@ -316,10 +331,18 @@ export default function App() {
 
         <header className="store-header">
           <div className="store-brand">
-            <Leaf size={25} />
+            {settings.logo ? (
+              <img
+                src={settings.logo}
+                alt={`${settings.name} logo`}
+                className="store-logo"
+              />
+            ) : (
+              <Leaf size={25} />
+            )}
             <div>
-              <span>LUNOVA SECRETS</span>
-              <h1>Your private boutique.</h1>
+              <span>{settings.name.toUpperCase()}</span>
+              <h1>{settings.tagline}</h1>
             </div>
           </div>
           <div className="store-header-actions">
@@ -356,14 +379,6 @@ export default function App() {
             </button>
           </div>
           <div className="toolbar-actions">
-            <button
-              className="settings-button editor-open-button"
-              aria-label="Customize"
-              onClick={() => setModal("editor")}
-            >
-              <Settings2 size={16} />
-              <span>Customize</span>
-            </button>
             <button
               className="settings-button"
               aria-label="Graphics settings"
@@ -410,10 +425,11 @@ export default function App() {
                 <span className="brand-icon">
                   <Leaf size={23} />
                 </span>
-                lunova<span className="brand-dot">®</span>
+                {settings.name}
               </a>
               <div className="store-label">
-                <span className="live-dot" /> THE INTIMATE BOUTIQUE
+                <span className="live-dot" />{" "}
+                {STORE_TYPES[settings.type].name.toUpperCase()}
               </div>
               <div className="sidebar-heading">YOUR STORE, REIMAGINED</div>
               <button
@@ -436,7 +452,8 @@ export default function App() {
                 <span className="nav-count">{products.length}</span>
               </button>
               <div className="sidebar-heading aisles-heading">
-                SHOP BY COLLECTION <span>06</span>
+                SHOP BY COLLECTION{" "}
+                <span>{String(categories.length).padStart(2, "0")}</span>
               </div>
               <nav aria-label="Product collections">
                 {categories.map((c) => {
@@ -457,11 +474,11 @@ export default function App() {
                 })}
               </nav>
               <button
-                className="nav-main customize-nav"
-                onClick={() => setModal("editor")}
+                className="nav-main admin-nav"
+                onClick={() => setModal("admin")}
               >
-                <Settings2 size={18} />
-                Customize boutique
+                <ShieldCheck size={18} />
+                Admin
               </button>
               <div className="sidebar-bottom">
                 <div className="little-card">
@@ -496,12 +513,7 @@ export default function App() {
         )}
         <div className="store-demo-label">
           <span className="live-dot" />
-          {source === "woocommerce"
-            ? "Imported website catalog · local demo copy"
-            : source === "custom"
-              ? "Your custom browser catalog · demo only"
-              : "Illustrative lingerie samples · your website products are not imported yet"}
-          <span> · {products.length} products · No real orders</span>
+          Demo shopping · {products.length} products · No real orders
         </div>
         <div id="store-overlay-root" />
         {view === "browse" && !selected && !modal && (
@@ -594,9 +606,15 @@ export default function App() {
             </div>
           </Modal>
         )}
-        {modal === "editor" && (
-          <Modal title="Customize your boutique" onClose={close} wide>
-            <CatalogEditor />
+        {modal === "admin" && (
+          <Modal title="Store administration" onClose={close} wide>
+            <Suspense
+              fallback={
+                <div className="scene-loading">Loading administration…</div>
+              }
+            >
+              <AdminPanel />
+            </Suspense>
           </Modal>
         )}
         {modal === "cart" && (
@@ -760,18 +778,51 @@ export default function App() {
           </Modal>
         )}
         {modal === "about" && (
-          <Modal title="Meet Lunova" onClose={close}>
+          <Modal title={`About ${settings.name}`} onClose={close}>
             <div className="help-content">
+              <p>{settings.description}</p>
+              <dl className="store-contact-details">
+                {settings.address && (
+                  <>
+                    <dt>Address</dt>
+                    <dd>{settings.address}</dd>
+                  </>
+                )}
+                {settings.phone && (
+                  <>
+                    <dt>Phone</dt>
+                    <dd>
+                      <a href={`tel:${settings.phone}`}>{settings.phone}</a>
+                    </dd>
+                  </>
+                )}
+                {settings.email && (
+                  <>
+                    <dt>Email</dt>
+                    <dd>
+                      <a href={`mailto:${settings.email}`}>{settings.email}</a>
+                    </dd>
+                  </>
+                )}
+                {settings.website && (
+                  <>
+                    <dt>Website</dt>
+                    <dd>
+                      <a
+                        href={settings.website}
+                        target="_blank"
+                        rel="noreferrer"
+                      >
+                        Visit our main website
+                      </a>
+                    </dd>
+                  </>
+                )}
+              </dl>
               <p>
-                A virtual lingerie boutique for Lunova Secrets, with
-                featured-image displays, stylized mannequins, and a saved demo
-                shopping bag. Customize the collection in this browser, or
-                import your public WooCommerce catalog.
-              </p>
-              <p>
-                Accounts, live inventory, secure ordering, and admin tools are
-                planned for later phases. No personal information is collected
-                and no payments or real orders are accepted.
+                Accounts, live inventory and secure ordering are planned for
+                later phases. No personal information is collected and no
+                payments or real orders are accepted.
               </p>
               <button className="primary-button" onClick={close}>
                 Back to the boutique

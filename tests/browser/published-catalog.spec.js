@@ -1,11 +1,13 @@
 import { test, expect } from "@playwright/test";
+import { mockCms, openAdmin } from "./helpers/cms.js";
 import { defaultCatalog } from "../../src/lib/products.js";
 test("supplied catalog loads by default with featured images, PKR prices and original product links", async ({
   page,
 }) => {
+  await mockCms(page);
   await page.goto("/");
   await expect(
-    page.getByText("Imported website catalog · local demo copy"),
+    page.getByText("Demo shopping · 21 products · No real orders"),
   ).toBeVisible();
   await page.getByRole("button", { name: "Product view", exact: true }).click();
   await expect(page.getByRole("button", { name: /^View / })).toHaveCount(21);
@@ -46,19 +48,19 @@ test("supplied catalog loads by default with featured images, PKR prices and ori
     "Checkout is not enabled",
   );
   await page.getByRole("button", { name: "Close dialog" }).click();
-  await page.getByRole("button", { name: "Customize", exact: true }).click();
-  await page.getByText("Restore sample boutique", { exact: true }).click();
+  await openAdmin(page);
+  await page.getByText("Replace with sample catalog", { exact: true }).click();
   await page
-    .getByRole("button", { name: "Restore samples", exact: true })
+    .getByRole("button", { name: "Publish samples", exact: true })
     .click();
   await expect(
     page.getByRole("button", { name: /Signature lace set.*Edit/ }),
   ).toBeVisible();
   await page
-    .getByText("Load published website collection", { exact: true })
+    .getByText("Restore bundled website catalog", { exact: true })
     .click();
   await page
-    .getByRole("button", { name: "Load published collection", exact: true })
+    .getByRole("button", { name: "Publish bundled catalog", exact: true })
     .click();
   await expect(
     page.getByRole("button", { name: new RegExp(p.name + ".*Edit") }),

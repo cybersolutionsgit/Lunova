@@ -1,18 +1,10 @@
 import { test, expect } from "@playwright/test";
 import { sampleCatalog } from "../../src/lib/products.js";
+import { mockCms, openAdmin } from "./helpers/cms.js";
 test.beforeEach(async ({ page }) => {
-  await page.addInitScript((catalog) => {
-    if (!localStorage.getItem("lunova-boutique-catalog-v1"))
-      localStorage.setItem(
-        "lunova-boutique-catalog-v1",
-        JSON.stringify(catalog),
-      );
-  }, sampleCatalog);
+  await mockCms(page, { catalog: sampleCatalog });
 });
-const openEditor = async (page) => {
-  await page.getByRole("button", { name: "Customize", exact: true }).click();
-  await expect(page.getByRole("dialog")).toBeVisible();
-};
+const openEditor = openAdmin;
 test("3D boutique renders, catalog and demo bag persist without checkout", async ({
   page,
 }) => {
@@ -141,7 +133,7 @@ test("owner can create, edit, reload, move and delete a local product", async ({
   await page.goto("/");
   await openEditor(page);
   await expect(page.getByRole("dialog")).toContainText(
-    "They do not update WordPress or other visitors",
+    "Product saves update your shared storefront",
   );
   await page
     .getByRole("button", { name: "Add a product", exact: true })
@@ -150,12 +142,7 @@ test("owner can create, edit, reload, move and delete a local product", async ({
   await page.getByLabel("Collection", { exact: true }).selectOption("robes");
   await page.getByLabel("Price (USD)").fill("39.95");
   await page.getByLabel("Display position").selectOption("8");
-  await page
-    .getByLabel("Presentation", { exact: true })
-    .selectOption("mannequin");
-  await page
-    .getByRole("button", { name: "Save product on this browser" })
-    .click();
+  await page.getByRole("button", { name: "Publish product" }).click();
   await expect(
     page.getByRole("button", { name: /My custom robe.*Display 9/ }),
   ).toBeVisible();
@@ -173,9 +160,7 @@ test("owner can create, edit, reload, move and delete a local product", async ({
   await page.getByRole("button", { name: /My custom robe.*Edit/ }).click();
   await page.getByLabel("Product name", { exact: true }).fill("Updated robe");
   await page.getByLabel("Demo bag quantity limit").fill("0");
-  await page
-    .getByRole("button", { name: "Save product on this browser" })
-    .click();
+  await page.getByRole("button", { name: "Publish product" }).click();
   await page
     .getByRole("button", { name: "Delete Updated robe", exact: true })
     .click();
@@ -236,7 +221,7 @@ test("website import previews public products and preserves featured images and 
   await expect(
     page.getByRole("button", { name: /Signature lace set.*Edit/ }),
   ).toBeVisible();
-  await page.getByRole("button", { name: "Replace local catalog" }).click();
+  await page.getByRole("button", { name: "Publish imported catalog" }).click();
   await page.getByRole("button", { name: "Close dialog" }).click();
   await page.getByRole("button", { name: "Product view", exact: true }).click();
   await page
@@ -310,24 +295,28 @@ test("uploaded photos survive reload and exported catalogs can be imported again
   await expect(page.getByLabel("Featured image URL")).toHaveValue(
     /^data:image\/jpeg;base64,/,
   );
-  await page
-    .getByRole("button", { name: "Save product on this browser" })
-    .click();
+  await page.getByRole("button", { name: "Publish product" }).click();
+  await expect(
+    page.getByRole("button", { name: "Export catalog" }),
+  ).toBeEnabled();
   const downloaded = page.waitForEvent("download");
   await page.getByRole("button", { name: "Export catalog" }).click();
   const file = await downloaded;
   expect(file.suggestedFilename()).toBe("lunova-catalog.json");
-  await page.getByText("Restore sample boutique", { exact: true }).click();
+  await page.getByText("Replace with sample catalog", { exact: true }).click();
   await page
-    .getByRole("button", { name: "Restore samples", exact: true })
+    .getByRole("button", { name: "Publish samples", exact: true })
     .click();
+  await expect(
+    page.getByRole("button", { name: "Import file", exact: true }),
+  ).toBeEnabled();
   await page
     .locator('input[type=file][accept="application/json,.json"]')
     .setInputFiles(await file.path());
   await expect(
     page.getByRole("heading", { name: "Review import · 8 products" }),
   ).toBeVisible();
-  await page.getByRole("button", { name: "Replace local catalog" }).click();
+  await page.getByRole("button", { name: "Publish imported catalog" }).click();
   await page.reload();
   await page.getByRole("button", { name: "Product view", exact: true }).click();
   await page

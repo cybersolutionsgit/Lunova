@@ -3,6 +3,7 @@ import { Canvas, events, useFrame, useThree } from "@react-three/fiber";
 import * as THREE from "three";
 import { useWorld, useCatalog } from "../lib/store";
 import { displays, movePlayer } from "../lib/world";
+import { FixtureShell, FixtureProps, photoPosition } from "./StoreFixtures";
 import { movement } from "../lib/controls";
 function labelTexture(
   text,
@@ -34,7 +35,11 @@ function Sign({
   fg = "#674451",
   rotation,
 }) {
-  const map = useMemo(() => labelTexture(text, fg, bg), [text, fg, bg]);
+  const name = useCatalog((s) => s.settings.name);
+  const map = useMemo(
+    () => labelTexture(text, fg, bg, name.toUpperCase()),
+    [text, fg, bg, name],
+  );
   useEffect(() => () => map.dispose(), [map]);
   return (
     <mesh position={position} rotation={rotation}>
@@ -171,93 +176,36 @@ function Hanger({ position }) {
     </group>
   );
 }
-function Form({ position, color, category }) {
-  const long = category === "sleepwear" || category === "robes";
-  return (
-    <group position={position}>
-      <mesh position={[0, 0.08, 0]}>
-        <cylinderGeometry args={[0.42, 0.45, 0.12, 24]} />
-        <meshStandardMaterial
-          color="#af9069"
-          metalness={0.5}
-          roughness={0.35}
-        />
-      </mesh>
-      <Pole position={[0, 0.48, 0]} height={0.8} radius={0.035} />
-      <mesh position={[0, 1.55, 0]} scale={[0.35, 0.58, 0.2]} castShadow>
-        <sphereGeometry args={[1, 20, 18]} />
-        <meshStandardMaterial color="#d4c3b6" roughness={0.9} />
-      </mesh>
-      <mesh position={[0, 1.22, 0]} scale={[0.32, 0.24, 0.22]}>
-        <sphereGeometry args={[1, 20, 16]} />
-        <meshStandardMaterial color="#d4c3b6" />
-      </mesh>
-      <Pole position={[0, 2.17, 0]} height={0.16} radius={0.09} />
-      {long ? (
-        <>
-          <mesh position={[0, 1.4, 0]} castShadow>
-            <cylinderGeometry args={[0.32, 0.47, 1.2, 24]} />
-            <meshStandardMaterial color={color} roughness={0.45} />
-          </mesh>
-          {category === "robes" && (
-            <Box
-              position={[0, 1.45, 0.3]}
-              size={[0.65, 0.065, 0.06]}
-              color="#d6b497"
-            />
-          )}
-        </>
-      ) : (
-        <>
-          <mesh position={[0, 1.8, 0.035]} scale={[0.365, 0.19, 0.215]}>
-            <sphereGeometry args={[1, 20, 12]} />
-            <meshStandardMaterial color={color} roughness={0.75} />
-          </mesh>
-          <mesh position={[0, 1.15, 0.025]} scale={[0.33, 0.16, 0.235]}>
-            <sphereGeometry args={[1, 20, 12]} />
-            <meshStandardMaterial color={color} roughness={0.75} />
-          </mesh>
-          {[-0.24, 0.24].map((x) => (
-            <Box
-              key={x}
-              position={[x, 1.98, 0]}
-              size={[0.045, 0.3, 0.23]}
-              color={color}
-            />
-          ))}
-        </>
-      )}
-    </group>
-  );
-}
 function Display({ fixture, index, product, map }) {
   const select = useWorld((s) => s.select);
+  const settings = useCatalog((s) => s.settings);
+  const { type, theme } = settings;
+  const photo = photoPosition(type);
   return (
     <group
       position={[fixture.position[0], 0, fixture.position[1]]}
       rotation={[0, fixture.rotation, 0]}
+      onClick={(e) => {
+        if (product) {
+          e.stopPropagation();
+          if (e.delta < 6) select(product);
+        }
+      }}
+      onPointerOver={(e) => {
+        if (product) {
+          e.stopPropagation();
+          document.body.style.cursor = "pointer";
+        }
+      }}
+      onPointerOut={() => (document.body.style.cursor = "auto")}
     >
-      <Box
-        position={[0, 0.09, 0]}
-        size={[2.3, 0.18, 1.1]}
-        color="#ddc9bd"
-        castShadow
-        receiveShadow
-      />
-      {[-1.04, 1.04].map((x) => (
-        <Pole key={x} position={[x, 1.5, -0.08]} height={2.8} />
-      ))}
-      <Pole
-        position={[0, 2.9, -0.08]}
-        height={2.08}
-        rotation={[0, 0, Math.PI / 2]}
-      />
+      <FixtureShell type={type} theme={theme} />
       <Sign
         text={`${String(index + 1).padStart(2, "0")} · ${product ? product.name : "Your next favorite"}`}
         position={[0, 3.15, 0]}
         width={2.25}
       />
-      {product ? (
+      {product && (
         <group
           onClick={(e) => {
             e.stopPropagation();
@@ -269,27 +217,9 @@ function Display({ fixture, index, product, map }) {
           }}
           onPointerOut={() => (document.body.style.cursor = "auto")}
         >
-          {product.presentation === "mannequin" ? (
-            <>
-              <Form
-                position={[-0.35, 0.12, 0]}
-                color={product.color}
-                category={product.category}
-              />
-              <Photo map={map} position={[0.62, 1.65, 0.3]} width={0.64} />
-            </>
-          ) : (
-            <>
-              <Hanger position={[0, 2.59, 0]} />
-              <Photo map={map} position={[0, 1.72, 0.08]} width={1.25} />
-            </>
-          )}
+          <FixtureProps type={type} product={product} />
+          <Photo map={map} position={photo.position} width={photo.width} />
         </group>
-      ) : (
-        <>
-          <Hanger position={[-0.45, 2.56, 0]} />
-          <Hanger position={[0.45, 2.56, 0]} />
-        </>
       )}
     </group>
   );
@@ -320,6 +250,16 @@ function Plant({ position }) {
   );
 }
 function Market() {
+  const { gl } = useThree();
+  const settings = useCatalog((s) => s.settings);
+  const { theme } = settings;
+  useEffect(() => {
+    gl.domElement.dataset.storeType = settings.type;
+    gl.domElement.setAttribute(
+      "aria-label",
+      `${settings.name}: ${settings.type} virtual store. Use WASD to walk and move your mouse to look.`,
+    );
+  }, [gl, settings.type, settings.name]);
   const products = useCatalog((s) => s.products);
   const maps = useProductMaps(products);
   const quality = useWorld((s) => s.quality);
@@ -327,7 +267,7 @@ function Market() {
     const c = document.createElement("canvas");
     c.width = c.height = 256;
     const ctx = c.getContext("2d");
-    ctx.fillStyle = "#eee5dc";
+    ctx.fillStyle = theme.floor;
     ctx.fillRect(0, 0, 256, 256);
     ctx.strokeStyle = "#e2d6cd";
     ctx.lineWidth = 1;
@@ -342,12 +282,12 @@ function Market() {
     t.repeat.set(10, 11);
     t.colorSpace = THREE.SRGBColorSpace;
     return t;
-  }, []);
+  }, [theme.floor]);
   useEffect(() => () => floorMap.dispose(), [floorMap]);
   return (
     <>
-      <color attach="background" args={["#eaded7"]} />
-      <fog attach="fog" args={["#eaded7", 24, 52]} />
+      <color attach="background" args={[theme.wall]} />
+      <fog attach="fog" args={[theme.wall, 24, 52]} />
       <ambientLight intensity={0.65} />
       <hemisphereLight args={["#fff4e7", "#b5a197", 1]} />
       <directionalLight
@@ -364,43 +304,48 @@ function Market() {
         <planeGeometry args={[20, 23]} />
         <meshStandardMaterial map={floorMap} roughness={0.65} />
       </mesh>
-      <Box position={[0, 2.3, -9.5]} size={[20, 4.6, 0.3]} color="#c9a5a5" />
-      <Box position={[-10, 2.3, 1]} size={[0.25, 4.6, 22]} color="#e5d1c8" />
-      <Box position={[10, 2.3, 1]} size={[0.25, 4.6, 22]} color="#e5d1c8" />
+      <Box position={[0, 2.3, -9.5]} size={[20, 4.6, 0.3]} color={theme.wall} />
+      <Box position={[-10, 2.3, 1]} size={[0.25, 4.6, 22]} color={theme.wall} />
+      <Box position={[10, 2.3, 1]} size={[0.25, 4.6, 22]} color={theme.wall} />
       <Box
         position={[0, 0.12, -9.25]}
         size={[20, 0.24, 0.08]}
-        color="#b39670"
+        color={theme.metal}
       />
       <Sign
-        text="LUNOVA secrets"
+        text={settings.name}
         position={[0, 3.65, -9.3]}
         width={6}
-        bg="#c9a5a5"
+        bg={theme.wall}
         fg="#583b48"
       />
       <Sign
-        text="A little confidence. A world of you."
+        text={settings.tagline}
         position={[0, 2.8, -9.3]}
         width={4.7}
-        bg="#c9a5a5"
+        bg={theme.wall}
         fg="#684551"
       />
-      {[-7, 7].map((x) => (
-        <group key={x} position={[x, 0, -8.9]}>
-          <Box position={[0, 1.4, 0]} size={[2.2, 2.8, 0.08]} color="#76505c" />
-          {Array.from({ length: 10 }, (_, i) => (
-            <mesh key={i} position={[-1 + i * 0.22, 1.4, 0.06]}>
-              <cylinderGeometry args={[0.13, 0.13, 2.8, 10]} />
-              <meshStandardMaterial
-                color={i % 2 ? "#936674" : "#825765"}
-                roughness={1}
-              />
-            </mesh>
-          ))}
-          <Sign text="FITTING ROOM" position={[0, 3.1, 0.1]} width={1.8} />
-        </group>
-      ))}
+      {settings.type === "boutique" &&
+        [-7, 7].map((x) => (
+          <group key={x} position={[x, 0, -8.9]}>
+            <Box
+              position={[0, 1.4, 0]}
+              size={[2.2, 2.8, 0.08]}
+              color="#76505c"
+            />
+            {Array.from({ length: 10 }, (_, i) => (
+              <mesh key={i} position={[-1 + i * 0.22, 1.4, 0.06]}>
+                <cylinderGeometry args={[0.13, 0.13, 2.8, 10]} />
+                <meshStandardMaterial
+                  color={i % 2 ? "#936674" : "#825765"}
+                  roughness={1}
+                />
+              </mesh>
+            ))}
+            <Sign text="FITTING ROOM" position={[0, 3.1, 0.1]} width={1.8} />
+          </group>
+        ))}
       {[-7, 0, 7].map((x) => (
         <group key={x}>
           <Pole

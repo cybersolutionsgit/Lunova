@@ -1,0 +1,3 @@
+# Server-only local configuration. Copy to .dev.vars and set your own password.
+ADMIN_USERNAME=Admin
+ADMIN_PASSWORD=

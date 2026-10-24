@@ -1,62 +1,68 @@
-# Lunova Secrets — virtual boutique
+# Lunova — immersive store and protected CMS
 
-A walkable lingerie boutique built with React, Vite, JavaScript, React Three Fiber / Three.js, Tailwind and Zustand. Grocery shelves have been replaced with brass clothing rails, featured-image displays, and stylized dress forms. **Demo only: no payments, customer accounts, live inventory or real orders.**
+A full-screen 3D storefront with a server-protected admin CMS. The current catalog contains 21 Lunova Secrets products in PKR, with locally copied featured photos. **Checkout, customer signup, real orders and payments remain disabled.**
 
-## For the store owner
+## Customer experience
 
-The 3D boutique opens immediately and fills the viewport. Open **Customize** in the floating store toolbar (or **Customize boutique** in the sidebar).
+The 3D store opens by default. Collections expands a sidebar inside the environment. Product details, catalog, cart and admin login are popups inside the same environment, including browser fullscreen. Desktop mouse movement turns the camera without dragging; WASD/arrow keys walk. Phones retain drag-look and touch movement. Controls pause while a panel is open. Product view is available without 3D; graphics quality is a per-device customer setting.
 
-- **Add/edit products:** name, collection, price, sizes/note, description, featured image, garment color, and demo bag quantity limit.
-- **Display position:** choose a numbered display (1–12) or Catalog only. Two products cannot occupy one display. All products remain searchable in Product view.
-- **Presentation:** choose a featured photo on a clothing rail, or a stylized mannequin beside the featured photo. A mannequin shows a generic colored garment, not an exact 3D reproduction or virtual try-on. Upload a photo of a mannequin wearing your product if you want its actual appearance shown.
-- **Upload photo:** JPG, PNG or WebP, up to 10 MB; resized locally to 900px before saving. HTTPS image URLs are preferable for larger catalogs.
-- **Import from my website:** reads public WooCommerce product data from `https://lunovasecrets.com/wp-json/wc/store/v1/products`, paginating up to 500 products. Review the product count/currency before replacing the local catalog. Imports names, descriptions, featured image URLs, public prices, currency and product-page links. Collections are inferred from names/categories and can be corrected in the editor. First 12 products get 3D display positions; others are Catalog only.
-- **Import file:** accepts an exported Lunova catalog JSON or an array of public WooCommerce Store API product objects. If your host blocks cross-site API requests, open the public product data link shown in the editor, save the JSON from your browser, then import that file. A single API page contains at most 100 products; use direct website import for pagination.
-- **Export catalog:** download `lunova-catalog.json` to back up edits. Share this file with Codex to publish the collection for everyone by updating `src/data/catalog.json` on a reviewed branch.
-- **Currency:** imported from WooCommerce, or editable as a 3-letter currency code. Changing the code changes the label only; it does not convert prices.
+Customers do not have Customize or public editing controls. Browser-local catalog overrides are no longer loaded. Products and store settings are fetched from the shared server; the demo bag remains device-local. The static catalog is a read-only fallback if the API is unavailable, and admin login fails closed if backend configuration is missing.
 
-**Editor changes are stored only in your current browser.** They do not update WordPress or other visitors. The editor is deliberately public and local, not a secure admin dashboard. A shared, authenticated editing system is a future phase. Use Export before clearing browser data or changing devices. Catalog saves validate data and report storage errors without overwriting the last valid catalog.
+## Admin CMS
 
-The published catalog now contains 21 real products from the owner-supplied WooCommerce public export, in PKR. The live public feed was also reached successfully and its 21 product IDs matched the supplied export. Featured images were downloaded without modification into `public/products/catalog/` (about 534 KiB total) to avoid external hotlink/CORS dependencies in 3D and make hosting migration easier. Each product retains its original image URL and website link. The original eight labelled sample illustrations remain available via Restore sample boutique; Load published website collection restores the real catalog. This is a snapshot, not automatic synchronization. The browser cross-origin importer is still dependent on the source CORS policy; its handling is tested with fixtures. Import stock is **not authoritative**: unavailable items get a zero demo cap; otherwise a default cap of ten is used. Prices can become stale after import. No checkout is enabled.
+Open **Collections → Admin**, enter the administrator username/password, and sign in. There is no registration/signup route. The default server username is **Admin**; the owner sets the password in a Cloudflare **server secret**, never frontend JavaScript. No real password is committed to this repository.
 
-## Run in Codex Cloud / locally
+- **Products:** create, edit, delete, update prices/descriptions/photos, assign one of twelve 3D positions, edit demo quantity limits, import public WooCommerce products, and import/export catalog JSON. Uploads are compressed JPG/PNG/WebP; HTTPS photo URLs work too. Save/Publish updates the shared virtual store. WordPress is a separate source and is not written back to.
+- **Store & theme:** choose boutique, shoe shop, bakery, supermarket, beauty, jewelry, electronics, furniture or general store. Edit store name, tagline, description, contact/address/website/logo and five theme colors.
+- **Niche fixtures:** boutique glass mannequin cases, shoe displays, glass bakery counters, supermarket shelving, beauty counters, jewelry showcases, electronics stands and home/furniture displays. Props are stylized illustrations of the niche, not exact 3D versions of the products; featured photos show the actual merchandise. Changing niche preserves products and existing collections. Additional products beyond the twelve display slots remain in Product view.
+- **Security:** server-authorized reads/writes, random sessions with hashed tokens, Secure/HttpOnly/SameSite cookies, origin checks on mutations, failed-login limits, eight-hour expiry, logout and password-rotation invalidation. Concurrent edits use revisions to prevent overwriting another session's save. Save errors leave published state unchanged.
 
-Use Node.js 22+ and npm. Use the existing checkout; cloud tasks are already isolated and do not need a worktree.
+New customer visits/reloads see the latest published database state. Open tabs do not automatically live-refresh. Cart hydration waits for the shared catalog before pruning unknown product IDs, so newly published products remain in a saved bag.
+
+## Activate production CMS — owner action required
+
+Follow **[docs/CMS_SETUP.md](docs/CMS_SETUP.md)**. In your Cloudflare account:
+
+1. Create the free-tier **D1** database `lunova-cms` and execute `migrations/0001_cms.sql` in its Console.
+2. Bind it to the Lunova Pages **Production** environment as **DB**.
+3. Add **ADMIN_PASSWORD** as a **Secret** in Pages settings. Optionally set **ADMIN_USERNAME** to `Admin`. No VITE_ prefix, no password in GitHub or chat.
+4. After review/merge, deploy the project and verify sign-in, a published edit, and the result in an incognito customer window.
+
+This session has no Cloudflare account credentials, so the production database, binding and secret have not been created here. Local backend validation is separate from production activation. Free tiers have usage limits; check current quotas in your account. Preview deployments should use separate databases and credentials.
+
+## Development
+
+Node.js 22+ and npm are required. Cloud tasks already run in isolated checkouts; no worktree is needed.
 
 ```sh
 cd /workspace/Lunova
 npm ci
-npm run dev -- --port 5173 --strictPort
+npm run db:local
+# Copy .dev.vars.example to .dev.vars and privately enter local-only login values.
+npm run build
+npm run dev:cms
 ```
 
-On your own computer use your actual checkout path. No runtime variables, credentials, database or Supabase project are required. Runtime API import depends on the source site's public WooCommerce Store API and CORS policy. Never put WordPress passwords, WooCommerce consumer secrets or service-role keys in client code or VITE_* variables.
-
-### Controls and fallback
-
-The 3D environment is always mounted and fills the screen by default. The Collections button on the left opens a sidebar over the scene; it never shrinks the store. Product view, product details, bag, editor, help and settings are popups inside the environment, including browser full-screen mode. Closing a product returns to the store without losing camera position.
-
-WASD / arrow keys walk. On desktop, moving the mouse over the scene turns the camera without clicking or dragging. Moving onto UI controls or leaving the scene stops mouse look. Touch devices retain drag-to-look and an arrow pad. Optional “Capture mouse” supports continuous turning; Esc releases it. Camera and walking pause while the sidebar or a dialog is open. Collection shortcuts move to safe positions. The entrance reset restores the camera. Settings → Lightweight reduces resolution and disables shadows. Product view remains usable without 3D.
-
-### Validation
+The local Pages/D1 runtime runs on port 8788 and persists ignored SQLite state under `.wrangler/state`. `wrangler.local.jsonc` is used by the database migration command only; Pages dev uses the supported CLI `--d1 DB` binding. No production database IDs are fabricated. In restricted cloud environments, set `XDG_CONFIG_HOME` to a writable directory and `WRANGLER_LOG_PATH` to a writable log path when running Wrangler; `WRANGLER_SEND_METRICS=false` disables CLI telemetry. Ordinary `npm run dev` starts frontend-only Vite; admin reports missing backend unless its API is provided.
 
 ```sh
 npm test
 npm run build
+npm run build:functions
 npm run test:e2e
+npm audit --omit=dev
 ```
 
-Unit tests validate the supplied catalog and cart mutation, edited/deleted product reconciliation, fixture collisions, safe spawns, catalog validation, image/link protocols, duplicate display prevention, and paginated WooCommerce data conversion. Browser tests cover the full-viewport default, canvas/position persistence across panels, hover camera controls, in-environment fullscreen dialogs, rendered 3D product selection, movement/collision, mobile controls, bag persistence, search, editor CRUD/persistence and import success/failure with mocked source responses. The source feed and downloaded image files were checked; real-device performance and automatic source synchronization remain separate checks.
+Node tests exercise the actual API and local D1 using Miniflare, including unauthenticated/forged requests, origin checks, validation, revisions, rate limits, password rotation, logout and expiry. Browser tests use a fixture API for UI flows, all nine niche layouts, theme/details, catalog CRUD, uploads, saved bag, hover/touch controls and fullscreen popups. A real local Pages/D1 browser integration was also run: login, publishing, a separate customer reading changes, unauthorized write denial and logout passed. Software WebGL checks do not establish physical-device frame rates.
 
-Playwright uses `/usr/bin/chromium` when available. Set `PLAYWRIGHT_CHROMIUM_EXECUTABLE_PATH` to another installed executable, or run `npx playwright install chromium`. CI installs its browser/dependencies. Headless Linux uses software WebGL. The Three.js chunk is large (~250KB compressed); the 3D scene is lazy-loaded. Hardware and accessibility review are still needed before a commercial launch.
+Playwright uses `/usr/bin/chromium` where available; set `PLAYWRIGHT_CHROMIUM_EXECUTABLE_PATH` for another installation or run `npx playwright install chromium`. The scene is lazy-loaded; Three.js is a large chunk (~250 KiB compressed), and real-device performance/accessibility review is still needed.
 
-## Deployment and later hosting migration
+## Deployment and later migration
 
-The existing Cloudflare Pages project serves `https://lunova-8dy.pages.dev`; the owner is connecting `shop.lunovasecrets.com` through a CNAME. DNS/HTTPS activation has not been independently verified here. Git integration builds the approved `main` branch with `npm run build`, output `dist`, Node 22. Protect production merges with required CI/review. Feature branches can have Cloudflare preview deployments if enabled. A feature branch push does not establish that production has changed.
+Cloudflare Pages builds `main` with `npm run build`, output `dist`, Node 22+. Pages automatically bundles root `functions/`. `public/_routes.json` routes only `/api/*` through Functions, keeping static files/photos on the asset CDN. The current production site is `https://shop.lunovasecrets.com`; its CMS update remains on a review branch until approved and configured. Protect production merges with CI/review. `public/_headers` permits HTTPS images and read-only API imports from the main Lunova Secrets site. Imported remote photos need CORS for WebGL; bundled photos do not.
 
-`public/_headers` sets browser security headers. Images may load from HTTPS hosts; API fetches are limited to the Lunova Secrets origin(s). Remote photo servers must permit CORS for photos used as WebGL textures. If not, the 3D display reports photo unavailability while Product view can still display the image; uploading/local-copying licensed photos avoids that dependency. No credentials are sent by the public importer. Additional API origins require an intentional CSP update.
+For a hosting move, export D1 and the catalog, copy the frontend build and photos, and migrate or replace the server API. Static file upload alone does not migrate authentication or the database. SQLite-compatible store rows hold catalog/settings JSON. A WordPress/WooCommerce-backed API on existing hosting is a future option. Preserve the current WordPress site and email DNS during migration.
 
-To migrate later: upload `dist` contents to static HTTPS hosting for the `shop` subdomain, verify it on a staging address, then change only that subdomain's DNS. Keep the WordPress site and email records intact. A future WooCommerce-backed system can keep products, orders and inventory in your existing hosting database. The present demo has **no server database** and does not require Cloudflare-specific application APIs.
+The bundled real product snapshot retains `originalImage` and source product URLs; photos were copied unchanged at the owner's request. It is not continuously synced to WooCommerce. The original eight labelled samples are retained as an explicit admin replacement option. Quantity limits are for the demo, not authoritative inventory. All VITE_* variables are public; never put credentials there.
 
-## Architecture and future work
-
-See [AGENTS.md](AGENTS.md) for future Codex sessions, [docs/ROADMAP.md](docs/ROADMAP.md) for milestones, and [boutique screenshot](docs/boutique-desktop.png) for the current design. The older grocery prototype screenshot remains for history.
+See [AGENTS.md](AGENTS.md) for architecture, [docs/ROADMAP.md](docs/ROADMAP.md) for milestones, and [docs/CMS_SETUP.md](docs/CMS_SETUP.md) for setup/troubleshooting.

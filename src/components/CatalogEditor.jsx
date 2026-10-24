@@ -12,7 +12,6 @@ import {
 } from "lucide-react";
 import { useCatalog, useWorld } from "../lib/store";
 import {
-  categories,
   defaultCatalog,
   sampleCatalog,
   money,
@@ -23,6 +22,7 @@ import {
   fromWooCommerce,
   validateCatalog,
 } from "../lib/catalog";
+import { getCollections } from "../lib/shop";
 import ProductArt from "./ProductArt";
 const blank = () => ({
   id: crypto.randomUUID(),
@@ -59,6 +59,7 @@ async function compressImage(file) {
 }
 export default function CatalogEditor() {
   const catalog = useCatalog();
+  const categories = getCollections(catalog.settings.type, catalog.products);
   const notify = useWorld((s) => s.notify);
   const [draft, setDraft] = useState(null),
     [error, setError] = useState(""),
@@ -71,18 +72,21 @@ export default function CatalogEditor() {
   useEffect(() => () => controller.current?.abort(), []);
   const report = (e) =>
     setError(e.message || "Could not complete that change.");
-  function replace(next) {
+  async function replace(next) {
+    setBusy(true);
     try {
-      catalog.replace(next);
+      await catalog.replace(next);
       setCurrency(next.currency);
       setError("");
       setPending(null);
       setConfirm(null);
-      notify("Catalog saved in this browser");
+      notify("Store catalog published for all customers");
       return true;
     } catch (e) {
       report(e);
       return false;
+    } finally {
+      setBusy(false);
     }
   }
   async function importWebsite() {
@@ -139,7 +143,7 @@ export default function CatalogEditor() {
     setTimeout(() => URL.revokeObjectURL(url), 1000);
     notify("Catalog exported. Keep this file as your backup.");
   }
-  function save(e) {
+  async function save(e) {
     e.preventDefault();
     const next = {
       ...catalog,
@@ -148,20 +152,19 @@ export default function CatalogEditor() {
         ? catalog.products.map((p) => (p.id === draft.id ? draft : p))
         : [...catalog.products, draft],
     };
-    if (replace(next)) setDraft(null);
+    if (await replace(next)) setDraft(null);
   }
   function field(key, value) {
     setDraft((d) => ({ ...d, [key]: value }));
   }
   return (
-    <div className="editor-content">
+    <fieldset disabled={busy} className="editor-content" aria-busy={busy}>
       <div className="editor-notice">
-        <strong>Demo editor · saved on this browser only</strong>
+        <strong>Store CMS · changes publish to all customers</strong>
         <p>
-          Your edits update this device’s boutique and bag. They do not update
-          WordPress or other visitors. Export your catalog and share the file
-          with Codex to publish it for everyone. This is not a secure admin
-          dashboard.
+          Product saves update your shared storefront. WordPress is a separate
+          source: imports read from it but do not write back. Checkout and real
+          orders remain disabled.
         </p>
       </div>
       {error && (
@@ -314,22 +317,11 @@ export default function CatalogEditor() {
                 })}
               </select>
             </label>
-            <label>
-              Presentation
-              <select
-                aria-label="Presentation"
-                value={draft.presentation}
-                onChange={(e) => field("presentation", e.target.value)}
-              >
-                <option value="photo">Featured photo on clothing rail</option>
-                <option value="mannequin">Stylized mannequin + photo</option>
-              </select>
-            </label>
           </div>
           <p className="field-hint">
-            Mannequins show a generic garment in your chosen color. The adjacent
-            photo represents your actual product; this is not a realistic
-            virtual try-on.
+            Fixtures and decorative props follow the store type selected in
+            Store & theme. The featured photo represents the actual product;
+            decorative models are not exact product replicas.
           </p>
           <div className="form-columns">
             <label>
@@ -360,7 +352,7 @@ export default function CatalogEditor() {
           </div>
           <button className="primary-button" type="submit" disabled={busy}>
             <Save size={16} />
-            Save product on this browser
+            Publish product
           </button>
         </form>
       ) : (
@@ -369,7 +361,7 @@ export default function CatalogEditor() {
             <button
               className="primary-button"
               onClick={() => {
-                setDraft(blank());
+                setDraft({ ...blank(), category: categories[1].id });
                 setError("");
               }}
             >
@@ -423,8 +415,9 @@ export default function CatalogEditor() {
             <div className="import-preview">
               <h3>Review import · {pending.products.length} products</h3>
               <p>
-                Currency: {pending.currency}. This will replace this browser’s
-                current catalog. Export first if you want to keep your edits.
+                Currency: {pending.currency}. This will replace the shared store
+                catalog for all customers. Export first if you want to keep your
+                edits.
               </p>
               <ul>
                 {pending.products.slice(0, 4).map((p) => (
@@ -437,7 +430,7 @@ export default function CatalogEditor() {
                 className="primary-button"
                 onClick={() => replace(pending)}
               >
-                Replace local catalog
+                Publish imported catalog
               </button>
               <button className="editor-back" onClick={() => setPending(null)}>
                 Cancel import
@@ -492,7 +485,7 @@ export default function CatalogEditor() {
                 {confirm === p.id && (
                   <div className="delete-confirm">
                     <span>
-                      Remove this product from the local boutique and demo bag?
+                      Remove this product from the storefront and demo bag?
                     </span>
                     <button
                       onClick={() =>
@@ -513,33 +506,33 @@ export default function CatalogEditor() {
             ))}
           </div>
           <details className="reset-catalog">
-            <summary>Load published website collection</summary>
+            <summary>Restore bundled website catalog</summary>
             <p>
-              This replaces your local edits with the collection bundled in this
-              version. Export your changes first.
+              This replaces your published edits with the collection bundled in
+              this version. Export your changes first.
             </p>
             <button
               className="secondary-button"
               onClick={() => replace(defaultCatalog)}
             >
-              Load published collection
+              Publish bundled catalog
             </button>
           </details>
           <details className="reset-catalog">
-            <summary>Restore sample boutique</summary>
+            <summary>Replace with sample catalog</summary>
             <p>
-              Export your edits first. This replaces this browser’s catalog with
+              Export your edits first. This replaces the shared catalog with
               sample products.
             </p>
             <button
               className="secondary-button"
               onClick={() => replace(sampleCatalog)}
             >
-              Restore samples
+              Publish samples
             </button>
           </details>
         </>
       )}
-    </div>
+    </fieldset>
   );
 }

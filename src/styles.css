@@ -2814,3 +2814,162 @@ kbd {
     display: inline;
   }
 }
+.store-shell {
+  --shop-primary: #805064;
+  --shop-surface: #fff7ef;
+}
+.store-shell .primary-button,
+.store-shell .bag-button,
+.store-shell .store-brand > svg,
+.store-shell .world-bottom > button {
+  background: var(--shop-primary);
+  color: #fff;
+}
+.store-shell .store-brand,
+.store-shell .store-header-actions,
+.store-shell .store-toolbar,
+.store-shell .world-bottom,
+.store-shell .in-world-sidebar,
+.store-shell .modal,
+.store-shell .modal > header {
+  background: var(--shop-surface);
+}
+.store-shell .store-brand h1,
+.store-shell .store-brand span,
+.store-shell .sidebar-toggle,
+.store-shell .category.selected,
+.store-shell .view-tabs button.active,
+.store-shell .admin-nav {
+  color: var(--shop-primary);
+}
+.store-logo {
+  width: 38px;
+  height: 38px;
+  object-fit: contain;
+  border-radius: 6px;
+}
+.admin-login {
+  padding: 30px;
+  max-width: 460px;
+  margin: auto;
+  color: #8b647a;
+}
+.admin-login > svg {
+  color: var(--shop-primary);
+  margin-bottom: 16px;
+}
+.admin-login h3 {
+  font:
+    26px Georgia,
+    serif;
+  margin: 0 0 12px;
+}
+.admin-login > p {
+  font-size: 12px;
+  line-height: 1.8;
+}
+.admin-login .editor-notice {
+  font-size: 11px;
+  line-height: 1.7;
+  margin-top: 20px;
+}
+.admin-toolbar {
+  display: flex;
+  gap: 10px;
+  align-items: center;
+  padding: 15px 20px;
+  border-bottom: 1px solid #e5cfd8;
+  flex-wrap: wrap;
+}
+.admin-toolbar > .view-tabs {
+  margin-right: auto;
+}
+.admin-panel .store-settings-form {
+  padding: 22px;
+}
+.theme-fields {
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  gap: 12px;
+  margin: 20px 0;
+}
+.product-form fieldset {
+  border: 0;
+  padding: 0;
+  margin: 20px 0 0;
+  min-width: 0;
+}
+.admin-panel > .editor-error {
+  margin: 18px;
+}
+.store-shell .in-world-sidebar .brand {
+  font-size: 24px;
+  letter-spacing: -0.5px;
+  overflow-wrap: anywhere;
+}
+.store-shell .admin-nav {
+  margin-top: 16px;
+  border: 1px solid #d8bac8;
+  border-radius: 6px;
+}
+.admin-panel .editor-notice {
+  margin-bottom: 15px;
+}
+@media (max-width: 580px) {
+  .admin-login {
+    padding: 22px;
+  }
+  .admin-toolbar {
+    padding: 12px;
+    gap: 7px;
+  }
+  .admin-toolbar .secondary-button {
+    font-size: 9px;
+    padding: 8px;
+  }
+  .admin-toolbar .view-tabs button {
+    font-size: 10px;
+  }
+  .theme-fields {
+    grid-template-columns: repeat(2, 1fr);
+  }
+  .admin-panel .store-settings-form {
+    padding: 16px;
+  }
+}
+fieldset.editor-content {
+  border: 0;
+  min-width: 0;
+  margin: 0;
+}
+fieldset.editor-content:disabled {
+  opacity: 0.85;
+}
+.store-shell .primary-button,
+.store-shell .bag-button,
+.store-shell .store-brand > svg,
+.store-shell .world-bottom > button {
+  color: var(--shop-on-primary, #fff);
+}
+.store-shell .modal,
+.store-shell .modal h2,
+.store-shell .store-brand h1,
+.store-shell .store-brand span {
+  color: var(--shop-on-surface, #523d47);
+}
+.store-contact-details {
+  font-size: 11px;
+  line-height: 1.7;
+  margin: 20px 0;
+}
+.store-contact-details dt {
+  font-weight: 600;
+  margin-top: 10px;
+}
+.store-contact-details dd {
+  margin: 3px 0 0;
+  overflow-wrap: anywhere;
+}
+.store-settings-form fieldset {
+  margin-top: 20px;
+}

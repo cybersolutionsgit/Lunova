@@ -33,3 +33,18 @@ export function cartTotals(items, catalog = products, currency = "USD") {
     { count: 0, subtotal: 0 },
   );
 }
+
+export function hydrateCart(items) {
+  if (!items || typeof items !== "object" || Array.isArray(items)) return {};
+  return Object.fromEntries(
+    Object.entries(items)
+      .slice(0, 500)
+      .filter(
+        ([id, q]) =>
+          /^[a-zA-Z0-9_-]{1,80}$/.test(id) &&
+          Number.isInteger(q) &&
+          q > 0 &&
+          q <= 9999,
+      ),
+  );
+}

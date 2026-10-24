@@ -1,35 +1,25 @@
-# Lunova Secrets roadmap
+# Lunova roadmap
 
-## Complete — first prototype
+## Complete — immersive customer prototype
 
-A procedural 3D store, first-person/touch movement, bounded collision, product interaction, a searchable catalog, persistent demo bag and Cloudflare deployment preparation. The owner deployed it on Cloudflare Pages. Payments and real orders stay disabled.
+A viewport-filling 3D store, mouse-hover camera look, WASD/touch walking, collision detection, collapsible sidebar and in-environment/fullscreen popups. Twenty-one owner-supplied WooCommerce products with PKR prices and local featured photos. The original customer prototype is deployed on Cloudflare; the owner connected shop.lunovasecrets.com. Demo bag only: no signup, checkout, payments or orders.
 
-## Current — lingerie boutique and local customization
+## Current — protected shared CMS
 
-The immersive UI opens directly into a full-viewport scene. A collapsible side panel and in-environment popups preserve the canvas and camera position. Desktop camera look follows mouse movement without dragging; touch dragging remains supported.
+Customer Customize controls are removed. Sidebar Admin opens server-checked username/password login with no signup. Pages Functions + D1 provide shared catalog/settings publishing. Nine niche fixtures and collections are implemented: boutique glass mannequin cases, shoes, bakery counters, supermarket shelves, beauty, jewelry, electronics, furniture and general store. Edit details, logo, theme, products, display slots and demo quantity limits. Changing niche preserves products. Decorative models are not exact SKU models.
 
-- Replace grocery shelving with tall brass display rails, featured-image panels, stylized mannequins, fitting-room scenery and boutique colors.
-- Collections for lingerie sets, bras, underwear, sleepwear and robes; original labelled samples until an actual catalog is imported.
-- Device-local product editor: photos/uploads, names/descriptions, prices, demo limits, color, display slots and presentation.
-- Public WooCommerce catalog importer with pagination, import preview, validated JSON import/export, and explicit CORS/error states. Read-only access; no changes to the live WordPress site.
-- Test cart reconciliation after edits/removal, display collision, product selection, mobile controls and import failure handling.
-- The supplied and live WooCommerce feeds matched 21 product IDs; the published snapshot includes PKR prices and locally copied featured images.
-- **Limits:** this snapshot does not sync automatically; browser import still depends on source CORS. Local edits are not published to other visitors. Mannequins are stylized forms, not accurate garment models. At most 12 products are in 3D at once; all imported products are in the catalog.
+Local D1 authorization tests, browser UI checks and a combined local Pages/D1 integration are verified. Production database creation, migration, DB binding and the ADMIN_PASSWORD server secret require the owner's Cloudflare account. Finish CMS_SETUP.md, review/merge, deploy, and verify live as admin and in a separate customer session. Do not call production CMS active until that succeeds.
 
-## Next — owner-directed design and real catalog
+## Next — owner-directed polish and richer merchandising
 
-Review the boutique style; import the real catalog and verify product names, currency, photos, stock messaging, collection assignment and display positions. Publish the reviewed seed catalog for all visitors. Replace/optimize licensed assets as needed. Check source image CORS and ownership, real mobile hardware, keyboard access and frame rate. No orders yet.
+Review niche fixtures with the owner, improve licensed/optimized 3D assets and mobile performance, add category editing or more display capacity if requested. Keep the featured photo as the authoritative visual. Accurate garment/shoe 3D replicas need suitable models. Treat WooCommerce imports as snapshots unless a deliberate sync integration is implemented.
 
-## Later — shared catalog and hosting
+## Later — hosting migration and authoritative commerce
 
-The owner prefers moving files/database to their own hosting later while keeping the current WordPress site. Evaluate existing WooCommerce installation and hosting capabilities before selecting the backend. Prefer one authoritative catalog instead of duplicating inventory. Supabase remains an alternative only if deliberately selected; do not introduce it by default.
+The owner prefers moving files/database to existing hosting later while retaining WordPress at lunovasecrets.com. Export the catalog and SQLite-compatible D1 data; migrate or replace the API as well as the frontend. Evaluate WordPress/WooCommerce capabilities before creating another authoritative inventory system. Preserve website/email DNS and test on staging.
 
-Implement authenticated, server-authorized editing, safe media uploads and shared display positions. Server roles must control write operations; local demo editor behavior must not be presented as secure administration. Develop on staging before touching the running WordPress store.
+Only after explicit owner approval: sizes/variants, real stock management, authenticated/guest checkout policy, delivery region, Cash on Delivery, server-authoritative pricing, atomic inventory updates, order history, status management and administrator authorization. Test concurrency, retries and unauthorized access. Admin CMS login does not imply customer accounts or order processing are enabled.
 
-## Later — checkout and customer accounts
+## Optional — payments
 
-Only after explicit owner approval: authenticated/guest checkout policy, sizes/variants, delivery region/currency, Cash on Delivery, server-side authoritative pricing/stock checks, atomic inventory updates, order history and secure administrator roles. Test unauthorized operations, concurrent purchases and retries. Respect the chosen backend's access policies, rate limits and credential handling. No secrets in browser code.
-
-## Optional — real payments and realistic 3D garments
-
-Require separate approval, account access and licensed assets. Payments use server-created sessions and verified webhooks. Accurate mannequin garments need suitable garment meshes, sizing and material work; do not claim a product photo alone produces a realistic 3D garment or fitting simulation.
+Separate approval and account access required. Use server-created payment sessions, signature-verified webhooks and idempotency. Never store card data or expose secret keys in frontend configuration.
