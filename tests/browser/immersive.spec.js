@@ -61,7 +61,11 @@ test("desktop look stays centred, menus release capture and returning resumes wi
   await expect(canvas).toHaveAttribute("data-look-yaw", "0");
   await page.mouse.move(550, 420);
   await page.mouse.move(700, 440);
-  expect(await canvas.getAttribute("data-look-yaw")).toBe("0");
+  await expect
+    .poll(async () =>
+      Math.abs(Number(await canvas.getAttribute("data-look-yaw"))),
+    )
+    .toBeGreaterThan(0.1);
   await page
     .getByRole("button", { name: "Click to look around", exact: true })
     .click();
@@ -364,4 +368,30 @@ test("mobile taps still select 3D products with full-screen joystick enabled", a
   ).toBeVisible();
   await expect(page.getByTestId("touch-joystick")).toHaveCount(0);
   await context.close();
+});
+
+test("desktop hover works without capture and holding the mouse pauses it", async ({
+  page,
+}) => {
+  await page.goto("/");
+  const canvas = page.getByTestId("store-canvas");
+  await expect(canvas).toHaveAttribute("data-look-yaw", "0");
+  await page.mouse.move(500, 650);
+  await page.mouse.move(600, 650, { steps: 4 });
+  await expect
+    .poll(async () => Number(await canvas.getAttribute("data-look-yaw")))
+    .toBeLessThan(-0.2);
+  await page.mouse.down();
+  const held = await canvas.getAttribute("data-look-yaw");
+  await page.mouse.move(800, 650, { steps: 4 });
+  await page.waitForTimeout(150);
+  expect(await canvas.getAttribute("data-look-yaw")).toBe(held);
+  await page.mouse.up();
+  await page.mouse.move(810, 650);
+  await expect
+    .poll(async () => Number(await canvas.getAttribute("data-look-yaw")))
+    .toBeLessThan(Number(held));
+  expect(
+    Math.abs(Number(await canvas.getAttribute("data-look-yaw")) - Number(held)),
+  ).toBeLessThan(0.05);
 });
