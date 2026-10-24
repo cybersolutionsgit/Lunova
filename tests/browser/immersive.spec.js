@@ -66,6 +66,9 @@ test("hovering turns the camera without a mouse button and UI panels pause contr
       Math.abs(Number(await canvas.getAttribute("data-look-yaw"))),
     )
     .toBeGreaterThan(0.1);
+  await page
+    .getByRole("button", { name: "Store controls", exact: true })
+    .click();
   await page.getByRole("button", { name: "Graphics settings" }).click();
   const yaw = await canvas.getAttribute("data-look-yaw");
   const pos = await page.getByTestId("player-marker").getAttribute("data-z");
@@ -92,6 +95,9 @@ test("product popups remain inside browser full screen", async ({ page }) => {
     "data-z",
     "9.00",
   );
+  await page
+    .getByRole("button", { name: "Store controls", exact: true })
+    .click();
   await page.getByRole("button", { name: "Full screen", exact: true }).click();
   await expect
     .poll(() => page.evaluate(() => !!document.fullscreenElement))
@@ -110,6 +116,9 @@ test("product popups remain inside browser full screen", async ({ page }) => {
       .evaluate((el) => document.fullscreenElement.contains(el)),
   ).toBe(true);
   await page.getByRole("button", { name: "Close dialog" }).click();
+  await page
+    .getByRole("button", { name: "Store controls", exact: true })
+    .click();
   await page
     .getByRole("button", { name: "Exit full screen", exact: true })
     .click();
@@ -146,4 +155,51 @@ test("touch screens retain drag look without opening the product underneath", as
     .toBeGreaterThan(0.1);
   await expect(page.getByRole("dialog")).toHaveCount(0);
   await context.close();
+});
+test("mobile view is clear by default and important controls expand only when requested", async ({
+  page,
+}) => {
+  await page.setViewportSize({ width: 390, height: 844 });
+  await page.goto("/");
+  const canvas = page.getByTestId("store-canvas");
+  await expect(canvas).toBeVisible();
+  await expect(
+    page.locator(
+      ".scene-greeting,.scene-top,.world-bottom,.store-toolbar,.store-demo-label",
+    ),
+  ).toHaveCount(0);
+  await expect(page.locator(".minimap")).toBeHidden();
+  await expect(
+    page.getByRole("button", { name: "Move forward", exact: true }),
+  ).toHaveCount(0);
+  await expect(
+    page.getByRole("button", { name: "Movement controls", exact: true }),
+  ).toHaveAttribute("aria-expanded", "false");
+  const before = await canvas.boundingBox();
+  await page
+    .getByRole("button", { name: "Movement controls", exact: true })
+    .click();
+  await expect(
+    page.getByRole("button", { name: "Move forward", exact: true }),
+  ).toBeVisible();
+  await page
+    .getByRole("button", { name: "Movement controls", exact: true })
+    .click();
+  await expect(
+    page.getByRole("button", { name: "Move forward", exact: true }),
+  ).toHaveCount(0);
+  await page
+    .getByRole("button", { name: "Store controls", exact: true })
+    .click();
+  await expect(
+    page.getByRole("button", { name: "Graphics settings", exact: true }),
+  ).toBeVisible();
+  await page.getByRole("button", { name: "Show map", exact: true }).click();
+  await expect(page.locator(".minimap")).toBeVisible();
+  expect(await canvas.boundingBox()).toEqual(before);
+  expect(
+    await page.evaluate(
+      () => document.documentElement.scrollWidth <= innerWidth,
+    ),
+  ).toBe(true);
 });

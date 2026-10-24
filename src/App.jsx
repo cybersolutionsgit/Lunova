@@ -36,6 +36,8 @@ import {
   Check,
   Compass,
   PanelLeftOpen,
+  Move,
+  Map,
   VolumeX,
   Info,
   RotateCcw,
@@ -92,10 +94,14 @@ export default function App() {
   const [query, setQuery] = useState(""),
     [view, setView] = useState("explore"),
     [fullscreen, setFullscreen] = useState(false),
-    [sidebarOpen, setSidebarOpen] = useState(false);
+    [sidebarOpen, setSidebarOpen] = useState(false),
+    [toolsOpen, setToolsOpen] = useState(false),
+    [movementOpen, setMovementOpen] = useState(false),
+    [mapOpen, setMapOpen] = useState(false);
   const setModal = useCallback(
     (value) => {
       setSidebarOpen(false);
+      setToolsOpen(false);
       openModal(value);
     },
     [openModal],
@@ -112,6 +118,7 @@ export default function App() {
   );
   const showCatalog = () => {
     setSidebarOpen(false);
+    setToolsOpen(false);
     setView("browse");
   };
   const worldRef = useRef();
@@ -184,14 +191,17 @@ export default function App() {
     }
   }
   useEffect(() => {
-    if (!sidebarOpen) return;
+    if (!sidebarOpen && !toolsOpen) return;
     document.exitPointerLock?.();
     const onKey = (e) => {
-      if (e.key === "Escape") setSidebarOpen(false);
+      if (e.key === "Escape") {
+        setSidebarOpen(false);
+        setToolsOpen(false);
+      }
     };
     document.addEventListener("keydown", onKey);
     return () => document.removeEventListener("keydown", onKey);
-  }, [sidebarOpen]);
+  }, [sidebarOpen, toolsOpen]);
   return (
     <main
       className={`store-shell ${sidebarOpen ? "sidebar-is-open" : ""}`}
@@ -216,43 +226,12 @@ export default function App() {
           }
         >
           <StoreScene
-            enabled={view === "explore" && !sidebarOpen}
+            enabled={view === "explore" && !sidebarOpen && !toolsOpen}
             onPosition={updatePosition}
           />
         </Suspense>
-        <div className="scene-top">
-          <span className="scene-badge">
-            <span className="live-dot" /> LIVE 3D EXPERIENCE
-          </span>
-          <span className="scene-location">
-            <MapPin size={14} />
-            {categories.find((c) => c.id === category)?.name}
-          </span>
-        </div>
-        <div className="scene-greeting">
-          <span>WELCOME TO YOUR</span>
-          <h2>{settings.name}</h2>
-          <p>{settings.description.slice(0, 130)}</p>
-        </div>
         <div className="crosshair" aria-hidden="true" />
-        <div className="scene-controls">
-          <button
-            onClick={() => {
-              goTo(aisleSpawns.all);
-              setCategory("all");
-            }}
-            aria-label="Return to entrance"
-          >
-            <RotateCcw size={17} />
-          </button>
-          <button
-            onClick={expand}
-            aria-label={fullscreen ? "Exit full screen" : "Full screen"}
-          >
-            {fullscreen ? <Minimize size={17} /> : <Maximize size={17} />}
-          </button>
-        </div>
-        <div className="minimap" aria-hidden="true">
+        <div className="minimap" aria-hidden="true" hidden={!mapOpen}>
           <span>{STORE_TYPES[settings.type].name.toUpperCase()}</span>
           <svg viewBox="0 0 60 64" className="boutique-map">
             {displays.map((d, i) => (
@@ -279,7 +258,12 @@ export default function App() {
           </svg>
           <small>ENTRANCE</small>
         </div>
-        <div className="touch-pad" aria-label="Touch movement controls">
+        <div
+          id="movement-pad"
+          className="touch-pad"
+          aria-label="Touch movement controls"
+          hidden={!movementOpen}
+        >
           {[
             ["forward", ArrowUp],
             ["left", ArrowLeft],
@@ -303,32 +287,90 @@ export default function App() {
             </button>
           ))}
         </div>
-        <div className="world-bottom">
-          <div>
-            <span className="keyboard-hint">
-              <kbd>W</kbd>
-              <span>
-                <kbd>A</kbd>
-                <kbd>S</kbd>
-                <kbd>D</kbd>
-              </span>
-            </span>
-            <span>Move around</span>
-            <span className="control-divider" />
-            <MousePointer2 size={17} />
-            <span className="desktop-look-hint">
-              Move mouse to look · Click to discover
-            </span>
-            <span className="touch-look-hint">
-              Drag to look · Tap to discover
-            </span>
+        <button
+          className="hud-tools-toggle"
+          aria-label="Store controls"
+          aria-expanded={toolsOpen}
+          aria-controls="store-controls"
+          onClick={() => {
+            setSidebarOpen(false);
+            setToolsOpen((v) => !v);
+          }}
+        >
+          <SlidersHorizontal size={20} />
+        </button>
+        <button
+          className="movement-toggle"
+          aria-label="Movement controls"
+          aria-expanded={movementOpen}
+          aria-controls="movement-pad"
+          onClick={() => setMovementOpen((v) => !v)}
+        >
+          {movementOpen ? <X size={20} /> : <Move size={20} />}
+        </button>
+        {toolsOpen && (
+          <div
+            className="compact-store-tools"
+            id="store-controls"
+            role="group"
+            aria-label="Store controls panel"
+          >
+            <button
+              onClick={() => {
+                goTo(aisleSpawns.all);
+                setCategory("all");
+                setToolsOpen(false);
+              }}
+              aria-label="Return to entrance"
+            >
+              <RotateCcw size={17} />
+              <span>Entrance</span>
+            </button>
+            <button
+              onClick={async () => {
+                await expand();
+                setToolsOpen(false);
+              }}
+              aria-label={fullscreen ? "Exit full screen" : "Full screen"}
+            >
+              {fullscreen ? <Minimize size={17} /> : <Maximize size={17} />}
+              <span>{fullscreen ? "Exit full screen" : "Full screen"}</span>
+            </button>
+            <button
+              onClick={() => setModal("settings")}
+              aria-label="Graphics settings"
+            >
+              <SlidersHorizontal size={17} />
+              <span>Graphics</span>
+            </button>
+            <button
+              onClick={() => setModal("help")}
+              aria-label="How to explore"
+            >
+              <Info size={17} />
+              <span>How to explore</span>
+            </button>
+            <button
+              onClick={() => {
+                setMapOpen((v) => !v);
+                setToolsOpen(false);
+              }}
+              aria-pressed={mapOpen}
+            >
+              <Map size={17} />
+              <span>{mapOpen ? "Hide map" : "Show map"}</span>
+            </button>
+            <button
+              onClick={() => {
+                setToolsOpen(false);
+                immersive();
+              }}
+            >
+              <MousePointer2 size={17} />
+              <span>{locked ? "Esc to release mouse" : "Capture mouse"}</span>
+            </button>
           </div>
-          <button onClick={immersive}>
-            {locked ? "Esc to release mouse" : "Capture mouse (optional)"}
-            <ArrowRight size={15} />
-          </button>
-        </div>
-
+        )}
         <header className="store-header">
           <div className="store-brand">
             {settings.logo ? (
@@ -342,53 +384,28 @@ export default function App() {
             )}
             <div>
               <span>{settings.name.toUpperCase()}</span>
-              <h1>{settings.tagline}</h1>
+              <h1 className="sr-only">{settings.tagline}</h1>
             </div>
           </div>
           <div className="store-header-actions">
             <button
-              className="settings-button"
-              onClick={() => setModal("help")}
-              aria-label="How to explore"
+              className="catalog-shortcut"
+              aria-label="Product view"
+              onClick={showCatalog}
             >
-              <Info size={18} />
-              <span>Help</span>
+              <Grid2X2 size={19} />
             </button>
-            <button className="bag-button" onClick={() => setModal("cart")}>
+            <button
+              className="bag-button"
+              aria-label={`My bag (${count} items)`}
+              onClick={() => setModal("cart")}
+            >
               <ShoppingBag size={18} />
               <span>My bag</span>
               <b>{count}</b>
             </button>
           </div>
         </header>
-        <nav className="store-toolbar" aria-label="Store tools">
-          <div className="view-tabs">
-            <button
-              className={view === "explore" ? "active" : ""}
-              onClick={() => setView("explore")}
-            >
-              <Compass size={16} />
-              Explore in 3D
-            </button>
-            <button
-              className={view === "browse" ? "active" : ""}
-              onClick={showCatalog}
-            >
-              <Grid2X2 size={16} />
-              Product view
-            </button>
-          </div>
-          <div className="toolbar-actions">
-            <button
-              className="settings-button"
-              aria-label="Graphics settings"
-              onClick={() => setModal("settings")}
-            >
-              <SlidersHorizontal size={17} />
-              <span>Settings</span>
-            </button>
-          </div>
-        </nav>
         <button
           className="sidebar-toggle"
           aria-label={
@@ -396,7 +413,10 @@ export default function App() {
           }
           aria-expanded={sidebarOpen}
           aria-controls="store-sidebar"
-          onClick={() => setSidebarOpen((v) => !v)}
+          onClick={() => {
+            setToolsOpen(false);
+            setSidebarOpen((v) => !v);
+          }}
         >
           {sidebarOpen ? <X size={20} /> : <PanelLeftOpen size={20} />}
           <span>{sidebarOpen ? "Close" : "Collections"}</span>
@@ -511,10 +531,6 @@ export default function App() {
             </aside>
           </>
         )}
-        <div className="store-demo-label">
-          <span className="live-dot" />
-          Demo shopping · {products.length} products · No real orders
-        </div>
         <div id="store-overlay-root" />
         {view === "browse" && !selected && !modal && (
           <Modal
@@ -733,8 +749,9 @@ export default function App() {
                 <section>
                   <h3>Wander at your own pace</h3>
                   <p>
-                    Use W A S D or the arrow keys to walk. On touch screens, use
-                    the arrow pad.
+                    Use W A S D or the arrow keys to walk. On touch screens, tap
+                    the movement button at the bottom right to open the arrow
+                    pad.
                   </p>
                 </section>
               </div>

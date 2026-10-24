@@ -2973,3 +2973,203 @@ fieldset.editor-content:disabled {
 .store-settings-form fieldset {
   margin-top: 20px;
 }
+/* Minimal customer HUD. Tools are opt-in; the central view stays unobstructed. */
+.store-shell [hidden] {
+  display: none !important;
+}
+.store-shell .store-header {
+  top: max(12px, env(safe-area-inset-top));
+  left: max(12px, env(safe-area-inset-left));
+  right: max(12px, env(safe-area-inset-right));
+  gap: 8px;
+}
+.store-shell .store-brand {
+  padding: 9px 12px;
+  gap: 8px;
+  border-radius: 9px;
+  max-width: calc(100% - 130px);
+  background: color-mix(in srgb, var(--shop-surface) 90%, transparent);
+}
+.store-shell .store-brand > svg,
+.store-shell .store-logo {
+  width: 26px;
+  height: 26px;
+}
+.store-shell .store-brand span {
+  font-size: 10px;
+  letter-spacing: 1px;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+.store-shell .store-brand > div {
+  min-width: 0;
+}
+.store-shell .store-brand .sr-only {
+  position: absolute;
+  width: 1px;
+  height: 1px;
+  padding: 0;
+  margin: -1px;
+  overflow: hidden;
+  clip: rect(0, 0, 0, 0);
+  white-space: nowrap;
+  border: 0;
+}
+.store-shell .store-header-actions {
+  background: transparent;
+  border: 0;
+  backdrop-filter: none;
+  padding: 0;
+  gap: 7px;
+}
+.store-shell .bag-button,
+.catalog-shortcut {
+  height: 44px;
+  min-width: 44px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  border-radius: 9px;
+}
+.store-shell .bag-button {
+  padding: 10px;
+  gap: 7px;
+}
+.store-shell .bag-button > span {
+  display: none;
+}
+.store-shell .bag-button b {
+  margin: 0;
+}
+.catalog-shortcut {
+  background: var(--shop-surface);
+  color: var(--shop-primary);
+  border: 1px solid #dfc6cf;
+  padding: 11px;
+}
+.store-shell .sidebar-toggle {
+  left: max(10px, env(safe-area-inset-left));
+  top: 48%;
+  width: 44px;
+  height: 44px;
+  padding: 10px;
+  border-radius: 50%;
+}
+.store-shell .sidebar-toggle > span {
+  display: none;
+}
+.store-shell.sidebar-is-open .sidebar-toggle {
+  left: min(291px, calc(100vw - 55px));
+}
+.hud-tools-toggle,
+.movement-toggle {
+  position: absolute;
+  bottom: max(12px, env(safe-area-inset-bottom));
+  z-index: 16;
+  width: 44px;
+  height: 44px;
+  display: grid;
+  place-items: center;
+  border: 1px solid #dfc6cf;
+  border-radius: 50%;
+  background: color-mix(in srgb, var(--shop-surface) 92%, transparent);
+  color: var(--shop-primary);
+  backdrop-filter: blur(8px);
+}
+.hud-tools-toggle {
+  left: max(12px, env(safe-area-inset-left));
+}
+.movement-toggle {
+  right: max(12px, env(safe-area-inset-right));
+  display: none;
+}
+.compact-store-tools {
+  position: absolute;
+  left: 12px;
+  bottom: 70px;
+  z-index: 20;
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 4px;
+  width: 270px;
+  max-width: calc(100% - 24px);
+  padding: 9px;
+  border: 1px solid #dfc6cf;
+  border-radius: 11px;
+  background: var(--shop-surface);
+  box-shadow: 0 5px 35px #57334725;
+}
+.compact-store-tools button {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  background: transparent;
+  color: var(--shop-on-surface);
+  font-size: 11px;
+  text-align: left;
+  padding: 12px 9px;
+  min-height: 44px;
+  border-radius: 6px;
+}
+.compact-store-tools button:hover {
+  background: #a97c8f15;
+}
+.store-shell .minimap {
+  bottom: 70px;
+  left: 12px;
+}
+.store-shell .touch-pad {
+  bottom: 70px;
+  right: 12px;
+  grid-template-columns: repeat(3, 38px);
+  grid-template-rows: repeat(2, 38px);
+  gap: 5px;
+}
+.store-shell .toast {
+  bottom: 72px;
+}
+.store-shell .crosshair {
+  opacity: 0.55;
+}
+@media (pointer: coarse) {
+  .movement-toggle {
+    display: grid;
+  }
+}
+@media (max-width: 580px) {
+  .movement-toggle {
+    display: grid;
+  }
+  .store-shell .store-brand {
+    padding: 8px 9px;
+    max-width: calc(100% - 115px);
+  }
+  .store-shell .store-brand span {
+    font-size: 9px;
+    letter-spacing: 0.6px;
+  }
+  .store-shell .store-brand > svg,
+  .store-shell .store-logo {
+    width: 24px;
+    height: 24px;
+  }
+  .store-shell .bag-button {
+    padding: 9px;
+    gap: 5px;
+  }
+  .store-shell .bag-button b {
+    min-width: 17px;
+    height: 18px;
+  }
+  .compact-store-tools {
+    width: 250px;
+  }
+  .store-shell .store-header-actions {
+    gap: 6px;
+  }
+  .store-shell .touch-pad {
+    bottom: 70px;
+    right: 12px;
+  }
+}

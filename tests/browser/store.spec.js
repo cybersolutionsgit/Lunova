@@ -47,6 +47,9 @@ test("mobile touch movement, graphics, search and responsive width", async ({
   await page.goto("/");
   const marker = page.getByTestId("player-marker");
   await expect(marker).toHaveAttribute("data-z", "9.00");
+  await page
+    .getByRole("button", { name: "Movement controls", exact: true })
+    .click();
   const forward = await page
     .getByRole("button", { name: "Move forward" })
     .boundingBox();
@@ -59,6 +62,9 @@ test("mobile touch movement, graphics, search and responsive width", async ({
     .poll(async () => Number(await marker.getAttribute("data-z")))
     .toBeLessThan(8.5);
   await page.mouse.up();
+  await page
+    .getByRole("button", { name: "Store controls", exact: true })
+    .click();
   await page.getByRole("button", { name: "Graphics settings" }).click();
   await page.getByRole("button", { name: /Lightweight/ }).click();
   await page.keyboard.press("Escape");
@@ -95,6 +101,9 @@ test("walking stops at the feature fixture and collection shortcuts are safe", a
   expect(Number(await marker.getAttribute("data-z"))).toBeGreaterThanOrEqual(
     3.97,
   );
+  await page
+    .getByRole("button", { name: "Store controls", exact: true })
+    .click();
   await page.getByRole("button", { name: "Return to entrance" }).click();
   await expect(marker).toHaveAttribute("data-z", "9.00");
   await page

@@ -6,9 +6,7 @@ test("supplied catalog loads by default with featured images, PKR prices and ori
 }) => {
   await mockCms(page);
   await page.goto("/");
-  await expect(
-    page.getByText("Demo shopping · 21 products · No real orders"),
-  ).toBeVisible();
+  await expect(page.locator(".store-brand")).toBeVisible();
   await page.getByRole("button", { name: "Product view", exact: true }).click();
   await expect(page.getByRole("button", { name: /^View / })).toHaveCount(21);
   for (const product of defaultCatalog.products) {
