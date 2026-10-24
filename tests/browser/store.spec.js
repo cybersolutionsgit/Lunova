@@ -68,6 +68,12 @@ test("mobile touch movement, graphics, search and responsive width", async ({
       () => document.documentElement.scrollWidth <= innerWidth,
     ),
   ).toBe(true);
+  await openEditor(page);
+  await page
+    .getByRole("button", { name: "Add a product", exact: true })
+    .click();
+  await expect(page.getByLabel("Product name", { exact: true })).toBeVisible();
+  await page.getByRole("button", { name: "Close dialog" }).click();
 });
 test("walking stops at the feature fixture and collection shortcuts are safe", async ({
   page,

@@ -295,6 +295,7 @@ export default function App() {
             <div className="toolbar-actions">
               <button
                 className="settings-button editor-open-button"
+                aria-label="Customize"
                 onClick={() => setModal("editor")}
               >
                 <Settings2 size={16} />
