@@ -10,7 +10,7 @@ export class ModelError extends Error {
   }
 }
 export function providerOrigin(env) {
-  const value = env.HF_SPACE_URL || "https://stabilityai-triposr.hf.space";
+  const value = env.HF_SPACE_URL || "https://jose16062007-triposr.hf.space";
   let url;
   try {
     url = new URL(value);

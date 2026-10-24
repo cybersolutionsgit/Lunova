@@ -4,4 +4,4 @@ ADMIN_PASSWORD=
 # Optional server-only token for the hosted free image-to-3D provider.
 HF_TOKEN=
 # Default candidate; use another compatible TripoSR Space if needed.
-HF_SPACE_URL=https://stabilityai-triposr.hf.space
+HF_SPACE_URL=https://jose16062007-triposr.hf.space

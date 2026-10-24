@@ -55,7 +55,7 @@ test("hosted transport uploads, preprocesses and downloads GLB without exposing 
   assert.equal(calls.length, 7);
   assert.ok(
     calls.every(
-      (c) => new URL(c.url).hostname === "stabilityai-triposr.hf.space",
+      (c) => new URL(c.url).hostname === "jose16062007-triposr.hf.space",
     ),
   );
   assert.ok(
@@ -323,5 +323,13 @@ test("connection, timeout, denied access and HTML failures are distinct and safe
   await assert.rejects(
     providerInfo({}, async () => new Response("<html>Starting</html>")),
     (e) => e.code === "provider_not_json",
+  );
+});
+
+test("default uses the owner-selected Space while explicit configured providers retain priority", () => {
+  assert.equal(providerOrigin({}), "https://jose16062007-triposr.hf.space");
+  assert.equal(
+    providerOrigin({ HF_SPACE_URL: "https://example-triposr.hf.space" }),
+    "https://example-triposr.hf.space",
   );
 });
