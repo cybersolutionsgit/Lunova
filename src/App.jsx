@@ -50,7 +50,7 @@ import {
 import { useCart, useWorld, useCatalog } from "./lib/store";
 import { cartTotals, sanitizeCart } from "./lib/cart";
 import { aisleSpawns, displays } from "./lib/world";
-import { movement } from "./lib/controls";
+import TouchJoystick from "./components/TouchJoystick";
 import Modal from "./components/Modal";
 import ProductArt from "./components/ProductArt";
 import { getCollections, STORE_TYPES, contrastColor } from "./lib/shop";
@@ -258,35 +258,16 @@ export default function App() {
           </svg>
           <small>ENTRANCE</small>
         </div>
-        <div
-          id="movement-pad"
-          className="touch-pad"
-          aria-label="Touch movement controls"
-          hidden={!movementOpen}
-        >
-          {[
-            ["forward", ArrowUp],
-            ["left", ArrowLeft],
-            ["back", ArrowDown],
-            ["right", ArrowRight],
-          ].map(([dir, Icon]) => (
-            <button
-              key={dir}
-              className={`touch-${dir}`}
-              aria-label={`Move ${dir}`}
-              onPointerDown={(e) => {
-                e.preventDefault();
-                e.currentTarget.setPointerCapture(e.pointerId);
-                movement[dir] = true;
-              }}
-              onPointerUp={() => (movement[dir] = false)}
-              onPointerCancel={() => (movement[dir] = false)}
-              onLostPointerCapture={() => (movement[dir] = false)}
-            >
-              <Icon size={20} />
-            </button>
-          ))}
-        </div>
+        <TouchJoystick
+          active={
+            movementOpen &&
+            !sidebarOpen &&
+            !toolsOpen &&
+            !selected &&
+            !modal &&
+            view === "explore"
+          }
+        />
         <button
           className="hud-tools-toggle"
           aria-label="Store controls"
@@ -750,8 +731,8 @@ export default function App() {
                   <h3>Wander at your own pace</h3>
                   <p>
                     Use W A S D or the arrow keys to walk. On touch screens, tap
-                    the movement button at the bottom right to open the arrow
-                    pad.
+                    the movement button at the bottom right to open the thumb
+                    joystick. Drag it to walk and release to stop.
                   </p>
                 </section>
               </div>
@@ -761,7 +742,8 @@ export default function App() {
                   <h3>Look around. Find a favorite.</h3>
                   <p>
                     Move your mouse over the store to look around without
-                    clicking. On touch screens, drag to look. Click a product
+                    clicking. Hold a mouse button to pause looking; release to
+                    resume. On touch screens, drag to look. Click a product
                     photo or mannequin to see its details. Optional mouse
                     capture lets you turn continuously; press Esc to release it.
                   </p>

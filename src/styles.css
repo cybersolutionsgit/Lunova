@@ -3173,3 +3173,39 @@ fieldset.editor-content:disabled {
     right: 12px;
   }
 }
+
+.touch-joystick {
+  position: absolute;
+  bottom: max(76px, calc(env(safe-area-inset-bottom) + 64px));
+  right: max(16px, env(safe-area-inset-right));
+  z-index: 17;
+  width: 124px;
+  height: 124px;
+  border-radius: 50%;
+  border: 1px solid #b997a5;
+  background: color-mix(in srgb, var(--shop-surface) 66%, transparent);
+  color: var(--shop-primary);
+  backdrop-filter: blur(6px);
+  touch-action: none;
+  user-select: none;
+  display: grid;
+  place-items: center;
+}
+.joystick-knob {
+  display: grid;
+  place-items: center;
+  width: 48px;
+  height: 48px;
+  border-radius: 50%;
+  background: var(--shop-surface);
+  border: 1px solid #b997a5;
+  box-shadow: 0 3px 12px #57334725;
+  pointer-events: none;
+}
+.joystick-help {
+  position: absolute;
+  width: 1px;
+  height: 1px;
+  overflow: hidden;
+  clip-path: inset(50%);
+}

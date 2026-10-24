@@ -170,7 +170,7 @@ test("mobile view is clear by default and important controls expand only when re
   ).toHaveCount(0);
   await expect(page.locator(".minimap")).toBeHidden();
   await expect(
-    page.getByRole("button", { name: "Move forward", exact: true }),
+    page.getByRole("button", { name: "Movement joystick", exact: true }),
   ).toHaveCount(0);
   await expect(
     page.getByRole("button", { name: "Movement controls", exact: true }),
@@ -180,13 +180,13 @@ test("mobile view is clear by default and important controls expand only when re
     .getByRole("button", { name: "Movement controls", exact: true })
     .click();
   await expect(
-    page.getByRole("button", { name: "Move forward", exact: true }),
+    page.getByRole("button", { name: "Movement joystick", exact: true }),
   ).toBeVisible();
   await page
     .getByRole("button", { name: "Movement controls", exact: true })
     .click();
   await expect(
-    page.getByRole("button", { name: "Move forward", exact: true }),
+    page.getByRole("button", { name: "Movement joystick", exact: true }),
   ).toHaveCount(0);
   await page
     .getByRole("button", { name: "Store controls", exact: true })
@@ -202,4 +202,81 @@ test("mobile view is clear by default and important controls expand only when re
       () => document.documentElement.scrollWidth <= innerWidth,
     ),
   ).toBe(true);
+});
+
+test("holding a mouse button pauses look and release resumes without a jump", async ({
+  page,
+}) => {
+  await page.goto("/");
+  const canvas = page.getByTestId("store-canvas");
+  await expect(canvas).toHaveAttribute("data-look-yaw", "0");
+  await page.mouse.move(500, 650);
+  await page.mouse.move(550, 650);
+  await expect
+    .poll(async () => Number(await canvas.getAttribute("data-look-yaw")))
+    .toBeLessThan(-0.1);
+  await page.mouse.down();
+  const yaw = await canvas.getAttribute("data-look-yaw");
+  await page.mouse.move(800, 680, { steps: 5 });
+  await page.waitForTimeout(200);
+  expect(await canvas.getAttribute("data-look-yaw")).toBe(yaw);
+  await page.mouse.up();
+  await page.mouse.move(810, 680);
+  await expect
+    .poll(async () => Number(await canvas.getAttribute("data-look-yaw")))
+    .toBeLessThan(Number(yaw));
+  expect(
+    Math.abs(Number(await canvas.getAttribute("data-look-yaw")) - Number(yaw)),
+  ).toBeLessThan(0.05);
+});
+
+test("touch joystick walks, keeps camera steady and stops on release or collapse", async ({
+  browser,
+}) => {
+  const context = await browser.newContext({
+    viewport: { width: 390, height: 844 },
+    isMobile: true,
+    hasTouch: true,
+  });
+  const page = await context.newPage();
+  await page.goto("/");
+  const marker = page.getByTestId("player-marker");
+  const canvas = page.getByTestId("store-canvas");
+  await expect(marker).toHaveAttribute("data-z", "9.00");
+  await page
+    .getByRole("button", { name: "Movement controls", exact: true })
+    .click();
+  const box = await page
+    .getByRole("button", { name: "Movement joystick", exact: true })
+    .boundingBox();
+  const session = await context.newCDPSession(page);
+  const x = box.x + box.width / 2,
+    y = box.y + box.height / 2;
+  await session.send("Input.dispatchTouchEvent", {
+    type: "touchStart",
+    touchPoints: [{ x, y }],
+  });
+  await session.send("Input.dispatchTouchEvent", {
+    type: "touchMove",
+    touchPoints: [{ x, y: y - 36 }],
+  });
+  await expect
+    .poll(async () => Number(await marker.getAttribute("data-z")))
+    .toBeLessThan(8.5);
+  expect(await canvas.getAttribute("data-look-yaw")).toBe("0");
+  await session.send("Input.dispatchTouchEvent", {
+    type: "touchEnd",
+    touchPoints: [],
+  });
+  await page.waitForTimeout(200);
+  const stopped = await marker.getAttribute("data-z");
+  await page.waitForTimeout(250);
+  expect(await marker.getAttribute("data-z")).toBe(stopped);
+  await page
+    .getByRole("button", { name: "Movement controls", exact: true })
+    .click();
+  await expect(
+    page.getByRole("button", { name: "Movement joystick", exact: true }),
+  ).toHaveCount(0);
+  await context.close();
 });

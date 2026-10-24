@@ -47,4 +47,6 @@ Development dependency overrides keep Miniflare’s Sharp/Undici on patched comp
 
 Cloudflare Pages uses an older Functions bundler (Wrangler 3.114.17). Keep shared catalog seed modules as plain JavaScript default exports; do not reintroduce JSON import attributes (`with { type: "json" }`) into the Functions import graph. CMS JSON import/export remains supported.
 
-Keep the customer HUD minimal, especially on mobile: no welcome/status banners, permanent toolbar or footer instructions. Map and touch movement pad are hidden by default and expanded by their buttons; graphics/help/fullscreen/reset are in Store controls. Preserve accessible labels and leave the camera canvas full-size when expanding controls.
+Keep the customer HUD minimal, especially on mobile: no welcome/status banners, permanent toolbar or footer instructions. Map and analog touch joystick are hidden by default and expanded by their buttons; graphics/help/fullscreen/reset are in Store controls. Preserve accessible labels and leave the camera canvas full-size when expanding controls.
+
+TouchJoystick.jsx uses pointer capture and proportional movement; reset on release/cancel/blur, collapse and modal/sidebar opening. Desktop hover look pauses while any mouse button is held, tracks the held cursor to avoid release jumps, and preserves touch drag and product clicks.

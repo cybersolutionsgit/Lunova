@@ -51,11 +51,11 @@ test("mobile touch movement, graphics, search and responsive width", async ({
     .getByRole("button", { name: "Movement controls", exact: true })
     .click();
   const forward = await page
-    .getByRole("button", { name: "Move forward" })
+    .getByRole("button", { name: "Movement joystick" })
     .boundingBox();
   await page.mouse.move(
     forward.x + forward.width / 2,
-    forward.y + forward.height / 2,
+    forward.y + forward.height * 0.2,
   );
   await page.mouse.down();
   await expect

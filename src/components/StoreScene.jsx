@@ -458,6 +458,11 @@ function Player({ enabled, onPosition }) {
     const lock = () => setLocked(document.pointerLockElement === gl.domElement);
     const move = (e) => {
       if (blocked) return;
+      if (e.pointerType === "mouse" && e.buttons !== 0) {
+        // Track the held cursor so releasing never causes a camera jump.
+        hover.current = { x: e.clientX, y: e.clientY };
+        return;
+      }
       let dx = 0,
         dy = 0;
       if (document.pointerLockElement === gl.domElement) {
@@ -523,12 +528,12 @@ function Player({ enabled, onPosition }) {
     if (blocked) return;
     const k = keys.current;
     let forward =
-      Number(!!(k.KeyW || k.ArrowUp || movement.forward)) -
-      Number(!!(k.KeyS || k.ArrowDown || movement.back));
+      Math.max(Number(!!(k.KeyW || k.ArrowUp)), Number(movement.forward)) -
+      Math.max(Number(!!(k.KeyS || k.ArrowDown)), Number(movement.back));
     let strafe =
-      Number(!!(k.KeyD || k.ArrowRight || movement.right)) -
-      Number(!!(k.KeyA || k.ArrowLeft || movement.left));
-    const len = Math.hypot(forward, strafe) || 1;
+      Math.max(Number(!!(k.KeyD || k.ArrowRight)), Number(movement.right)) -
+      Math.max(Number(!!(k.KeyA || k.ArrowLeft)), Number(movement.left));
+    const len = Math.max(1, Math.hypot(forward, strafe));
     forward /= len;
     strafe /= len;
     const speed = 3.3 * Math.min(dt, 0.05);
