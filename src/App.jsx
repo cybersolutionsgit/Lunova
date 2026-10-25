@@ -779,6 +779,11 @@ export default function App() {
                   </p>
                 </section>
               </div>
+              <p>
+                <a href="/models/credits.html" target="_blank" rel="noreferrer">
+                  3D model credits
+                </a>
+              </p>
               <button className="primary-button" onClick={close}>
                 Let’s explore
                 <ArrowRight size={17} />

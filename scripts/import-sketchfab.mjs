@@ -27,7 +27,9 @@ export async function importSketchfab(
   const metadata = JSON.parse(await readFile(metadataPath, "utf8"));
   uid(metadata.uid);
   if (
-    metadata.downloadAuthorization !== "official-download-api" ||
+    !["official-download-api", "official-sketchfab-download"].includes(
+      metadata.downloadAuthorization,
+    ) ||
     metadata.commercialImportAllowed !== true ||
     !commercialLicense(metadata.license || {}) ||
     !metadata.creator?.name ||
@@ -138,13 +140,20 @@ export async function importSketchfab(
           name: metadata.license.name,
           url: metadata.license.url,
         },
-        downloadAuthorization: "official-download-api",
+        downloadAuthorization: metadata.downloadAuthorization,
+        sourceArchiveSha256: /^[a-f0-9]{64}$/.test(
+          metadata.sourceArchiveSha256 || "",
+        )
+          ? metadata.sourceArchiveSha256
+          : null,
         retrievedAt: metadata.retrievedAt || null,
         asset: `/models/sketchfab/${metadata.uid}/${model}`,
         attribution: creditText(metadata),
         importedAt: new Date().toISOString(),
         modifications:
-          "No artistic changes. Runtime scale/placement may change; review before publication.",
+          typeof metadata.modifications === "string"
+            ? metadata.modifications.slice(0, 1000)
+            : "No artistic changes. Runtime scale/placement may change; review before publication.",
       };
       await writeFile(
         join(destination, "attribution.json"),

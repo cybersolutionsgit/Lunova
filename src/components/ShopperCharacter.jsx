@@ -1,6 +1,7 @@
 import { useMemo, useRef, useEffect } from "react";
 import { useFrame, useThree } from "@react-three/fiber";
 import * as THREE from "three";
+import ImportedShopper from "./ImportedShopper";
 import {
   sampleVisitor,
   trolleyPosition,
@@ -186,7 +187,13 @@ export default function ShopperCharacter({ person, detail, animate, paused }) {
     knees = useRef([]),
     wheels = useRef([]),
     elapsed = useRef(0),
-    published = useRef(1);
+    published = useRef(1),
+    motion = useRef({
+      distance: 0,
+      walking: false,
+      animate: false,
+      paused: false,
+    });
   const { camera, gl } = useThree();
   const { skin, hair, outfit, staff } = person;
   const blouse = useMemo(
@@ -272,13 +279,16 @@ export default function ShopperCharacter({ person, detail, animate, paused }) {
     visitorPoses.set(person.id, pose);
     const moved = Math.hypot(pose.x - previous.x, pose.z - previous.z),
       walking = moved > 0.00001;
+    motion.current = { distance: pose.distance, walking, animate, paused };
     const gait = (pose.distance / 0.72) * Math.PI * 2;
     legs.current.forEach((leg, i) => {
+      if (!leg) return;
       leg.rotation.x = walking
         ? Math.sin(gait + i * Math.PI) * 0.3
         : THREE.MathUtils.damp(leg.rotation.x, 0, 10, step);
     });
     knees.current.forEach((knee, i) => {
+      if (!knee) return;
       knee.rotation.x = walking
         ? Math.max(0, Math.sin(gait + i * Math.PI)) * 0.32
         : THREE.MathUtils.damp(knee.rotation.x, 0, 10, step);
@@ -286,13 +296,18 @@ export default function ShopperCharacter({ person, detail, animate, paused }) {
     const previousCart = trolleyPosition(previous),
       cart = trolleyPosition(pose);
     const rolled = Math.hypot(cart.x - previousCart.x, cart.z - previousCart.z);
-    for (const wheel of wheels.current) wheel.rotation.x += rolled / 0.085;
-    head.current.rotation.y =
-      animate && !paused && detail ? Math.sin(elapsed.current * 0.5) * 0.1 : 0;
-    head.current.rotation.x =
-      animate && !paused && detail
-        ? Math.sin(elapsed.current * 0.4) * 0.025
-        : 0;
+    for (const wheel of wheels.current)
+      if (wheel) wheel.rotation.x += rolled / (staff ? 0.085 : 0.0714);
+    if (head.current)
+      head.current.rotation.y =
+        animate && !paused && detail
+          ? Math.sin(elapsed.current * 0.5) * 0.1
+          : 0;
+    if (head.current)
+      head.current.rotation.x =
+        animate && !paused && detail
+          ? Math.sin(elapsed.current * 0.4) * 0.025
+          : 0;
     published.current += step;
     if (published.current > 0.2) {
       gl.domElement.dataset[
@@ -310,8 +325,8 @@ export default function ShopperCharacter({ person, detail, animate, paused }) {
       published.current = 0;
     }
   }, -1);
-  return (
-    <group ref={root}>
+  const appearance = (
+    <>
       <mesh geometry={blouse} scale={[1, 1, 0.7]} raycast={noRaycast}>
         <meshStandardMaterial color={outfit} map={fabric} roughness={0.92} />
       </mesh>
@@ -343,7 +358,7 @@ export default function ShopperCharacter({ person, detail, animate, paused }) {
         <group key={side}>
           <group
             ref={(el) => {
-              if (el) legs.current[i] = el;
+              legs.current[i] = el;
             }}
             position={[side * 0.1, 0.715, 0]}
           >
@@ -354,7 +369,7 @@ export default function ShopperCharacter({ person, detail, animate, paused }) {
             />
             <group
               ref={(el) => {
-                if (el) knees.current[i] = el;
+                knees.current[i] = el;
               }}
               position={[0, -0.31, 0]}
             >
@@ -565,8 +580,25 @@ export default function ShopperCharacter({ person, detail, animate, paused }) {
           kind="box"
           color="#f4e7cc"
         />
+      ) : null}
+    </>
+  );
+  return (
+    <group ref={root}>
+      {staff ? (
+        appearance
       ) : (
-        <Trolley detail={detail} wheels={wheels} />
+        <ImportedShopper
+          detail={detail}
+          motion={motion}
+          personId={person.id}
+          fallback={appearance}
+        />
+      )}
+      {!staff && (
+        <group position={[-0.025, 0, -0.2012]} scale={0.84}>
+          <Trolley detail={detail} wheels={wheels} />
+        </group>
       )}
     </group>
   );

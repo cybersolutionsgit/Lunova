@@ -55,6 +55,7 @@ export function sampleVisitor(person, elapsed = 0) {
   );
   return {
     x,
+    cartOffset: 0.5212,
     z: start + (end - start) * travel,
     yaw: (back ? Math.PI * 2 : Math.PI) + Math.PI * turn,
     speed:
@@ -66,8 +67,8 @@ export function sampleVisitor(person, elapsed = 0) {
 }
 export function trolleyPosition(pose) {
   return {
-    x: pose.x + Math.sin(pose.yaw) * 0.86,
-    z: pose.z + Math.cos(pose.yaw) * 0.86,
+    x: pose.x + Math.sin(pose.yaw) * (pose.cartOffset ?? 0.86),
+    z: pose.z + Math.cos(pose.yaw) * (pose.cartOffset ?? 0.86),
   };
 }
 export function visitorMustYield(pose, player) {
@@ -92,8 +93,8 @@ export function visitorObstacles(quality, enabled, poses) {
       const cart = trolleyPosition(pose),
         s = Math.abs(Math.sin(pose.yaw)),
         c = Math.abs(Math.cos(pose.yaw));
-      const w = c * 0.31 + s * 0.45,
-        d = c * 0.45 + s * 0.31;
+      const w = c * 0.27 + s * 0.38,
+        d = c * 0.38 + s * 0.27;
       result.push({
         minX: cart.x - w,
         maxX: cart.x + w,

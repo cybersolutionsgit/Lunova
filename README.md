@@ -79,7 +79,7 @@ Review screenshots: [clothing rails and carried basket](docs/multiple-products-b
 
 Verified for this change: 25 unit/backend tests and 26 Chromium browser tests passed (`npx playwright test --timeout=60000`), plus the production build and both Functions compilers. The nine-niche rebuild test allows 60 seconds for software WebGL. Physical-device frame rates are not verified.
 
-The store includes two detailed procedural women pushing wheeled trolleys and a cashier at a service desk, with no external assets or services. Shoppers follow separate shelf-safe aisle routes, pause and turn, animate their legs and wheels, and yield to the customer. Rounded body shapes, shaped blouses/skirts, fabric texture, facial details, hair, jewelry and trolley lattice replace the original simple figures. These are illustrative procedural characters, not scanned or photorealistic people.
+The store includes two walking shoppers using the owner-selected Grauwolf jeans model, wheeled procedural trolleys and a procedural cashier at a service desk. Models are bundled locally; no runtime Sketchfab service or account is used. Shoppers follow separate shelf-safe aisle routes, pause and turn, animate their legs and wheels, and yield to the customer. Rounded body shapes, shaped blouses/skirts, fabric texture, facial details, hair, jewelry and trolley lattice replace the original simple figures. These are illustrative procedural characters, not scanned or photorealistic people.
 
 Both graphics modes support walking. Lightweight graphics shows one shopper and the cashier with simpler details. Reduced motion keeps everyone still; opening panels pauses movement without a time jump. Open **Store controls → Graphics → Hide store visitors** to hide people and the desk for this session. Collision bounds follow current body/trolley positions; NPCs do not talk, take orders or interact with customer data.
 
@@ -94,3 +94,19 @@ For deployment cleanup, remove the unused `HF_TOKEN` secret and `HF_SPACE_URL` v
 ## Sketchfab development assets
 
 Sketchfab is a build-time sourcing tool for Codex, not an Admin or customer feature. Codex searches for licensed realistic models, obtains authorized files when account access is available, preserves creator credits, optimizes and integrates them into the store. Public search and repository import helpers are available; no Sketchfab interface, website OAuth routes or account credentials are installed in the shop. See [developer workflow](docs/SKETCHFAB_SETUP.md).
+
+## Owner-selected jeans shopper
+
+The owner supplied the official Sketchfab archive for [“model an jeans” by Grauwolf](https://sketchfab.com/3d-models/d81314a29e3943d88a6ee1426021a177), licensed [CC BY 4.0](https://creativecommons.org/licenses/by/4.0/). Both shoppers now use that model; the cashier remains procedural. No Sketchfab Admin features are added. The original unrigged posed mesh was adapted with normalized scale/origin, lighter geometry/textures, a lower-body skeleton and an in-place walking loop. The original upper-body hand/head pose is retained; this is a simple custom gait, not a fully retargeted motion-capture animation or hand-to-trolley IK rig.
+
+Desktop GLB is about 3.9 MB / 60,093 triangles; Lightweight is about 1.8 MB / 21,699 triangles. Each instance clones its skeleton and owns its animation mixer while sharing cached geometry/textures. Menus pause movement, reduced motion disables animation, and a missing asset falls back to the previous procedural figure. Trolley scale/position and collision bounds match the new character. Creator/license/modification notices are embedded in the GLBs, stored with the assets, and linked from **Help → 3D model credits**.
+
+[View the in-store preview](docs/jeans-shopper-preview.png). This screenshot uses the same Grauwolf model and CC BY credit above.
+
+Optional rebuild (Blender 4.3.2 was used):
+
+```sh
+blender -b -t 4 --python scripts/prepare-jeans-shopper.py -- /path/to/official/source/model.glb /tmp/jeans-build
+```
+
+The original archive is not committed; its SHA-256 is retained in attribution.json. Rebuilds must retain the creator/license, modification notices and both quality variants. Normal application builds use the committed GLBs and do not require Blender. Verified: 34 unit/backend tests, seven focused browser tests (actual model loading, animation, quality switch, fallback, credits, product/cart/Admin and reduced motion), and the production build passed. Software WebGL does not prove physical-device frame rates.
