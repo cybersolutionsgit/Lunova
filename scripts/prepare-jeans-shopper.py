@@ -1,7 +1,7 @@
 """Blender build step for the owner-supplied CC BY Grauwolf model.
 Usage: blender -b -t 4 --python scripts/prepare-jeans-shopper.py -- INPUT_GLB OUTPUT_DIR
 Original: https://sketchfab.com/3d-models/d81314a29e3943d88a6ee1426021a177
-Modifications: scale/origin normalization, decimation, texture resizing, lower-body rig and walking loop.
+Modifications: scale/origin normalization, decimation, texture resizing, lower-body rig and walking loop, fixed two-handed trolley pose and contact repairs.
 """
 import bpy, math, pathlib, sys, json
 from mathutils import Vector

@@ -43,6 +43,10 @@ test("two products on the same rack select independently and the carried basket 
   }
   await expect(canvas).toHaveAttribute("data-basket-count", "2");
   await page.reload();
+  // The basket marker mounts before the lazy-loaded scene finishes reloading.
+  await expect(
+    page.getByText("Opening your boutique…", { exact: true }),
+  ).toBeHidden({ timeout: 30000 });
   await expect(canvas).toHaveAttribute("data-basket-count", "2");
   await page.getByRole("button", { name: /My bag/ }).tap();
   for (const product of products.slice(0, 2))

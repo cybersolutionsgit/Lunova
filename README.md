@@ -97,11 +97,11 @@ Sketchfab is a build-time sourcing tool for Codex, not an Admin or customer feat
 
 ## Owner-selected jeans shopper
 
-The owner supplied the official Sketchfab archive for [“model an jeans” by Grauwolf](https://sketchfab.com/3d-models/d81314a29e3943d88a6ee1426021a177), licensed [CC BY 4.0](https://creativecommons.org/licenses/by/4.0/). Both shoppers now use that model; the cashier remains procedural. No Sketchfab Admin features are added. The original unrigged posed mesh was adapted with normalized scale/origin, lighter geometry/textures, a lower-body skeleton and an in-place walking loop. The original upper-body hand/head pose is retained; this is a simple custom gait, not a fully retargeted motion-capture animation or hand-to-trolley IK rig.
+The owner supplied the official Sketchfab archive for [“model an jeans” by Grauwolf](https://sketchfab.com/3d-models/d81314a29e3943d88a6ee1426021a177), licensed [CC BY 4.0](https://creativecommons.org/licenses/by/4.0/). Both shoppers now use that model; the cashier remains procedural. No Sketchfab Admin features are added. The original unrigged posed mesh was adapted with normalized scale/origin, lighter geometry/textures, a lower-body skeleton and an in-place walking loop. Both arms are now baked into a fixed trolley-pushing pose, with repaired sleeve and former hand-contact surfaces. The walking legs remain animated; fingers do not articulate and this is not a full humanoid IK rig.
 
 Desktop GLB is about 3.9 MB / 60,093 triangles; Lightweight is about 1.8 MB / 21,699 triangles. Each instance clones its skeleton and owns its animation mixer while sharing cached geometry/textures. Menus pause movement, reduced motion disables animation, and a missing asset falls back to the previous procedural figure. Trolley scale/position and collision bounds match the new character. Creator/license/modification notices are embedded in the GLBs, stored with the assets, and linked from **Help → 3D model credits**.
 
-[View the in-store preview](docs/jeans-shopper-preview.png). This screenshot uses the same Grauwolf model and CC BY credit above.
+[View the updated trolley-pose preview](docs/shopper-trolley-pose.png). This screenshot uses the same Grauwolf model and CC BY credit above.
 
 Optional rebuild (Blender 4.3.2 was used):
 

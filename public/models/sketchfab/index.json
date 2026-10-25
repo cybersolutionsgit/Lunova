@@ -22,12 +22,12 @@
     "lowAsset": "/models/sketchfab/d81314a29e3943d88a6ee1426021a177/shopper-push-low.glb",
     "variants": {
       "desktop": {
-        "triangles": 59916,
-        "bytes": 3087972
+        "triangles": 55844,
+        "bytes": 2923188
       },
       "lightweight": {
-        "triangles": 21630,
-        "bytes": 1443220
+        "triangles": 20160,
+        "bytes": 1378444
       }
     },
     "pose": "two-hands-on-trolley",

@@ -156,7 +156,7 @@ def repose_arms(mesh):
         for j in range(24):
             face=bm.faces.new((skin_rings[i][j],skin_rings[i][(j+1)%24],skin_rings[i+1][(j+1)%24],skin_rings[i+1][j]));face.material_index=skin_index;face.smooth=True
     # Reconstruct the small fused hand/thigh contact surface with the clean
-    # opposite-leg denim texture. The edge rolls behind the existing jeans.
+    # matching denim material. The edge rolls behind the existing jeans.
     if uv_layer and donors:
         grid=[];uv_by_vertex={}
         nearest,denim_index,_=denim.find(Vector((-.105,-.04,.85)))
@@ -164,14 +164,14 @@ def repose_arms(mesh):
         for row in range(19):
             v=row/18;line=[]
             for col in range(13):
-                u=col/12;x=.13+.07*math.sin(math.pi*v)**.3*(2*u-1);z=.75+.23*v
-                y=-.122+.035*abs(2*u-1)**2+.02*abs(2*v-1)**2
+                u=col/12;x=.14+.095*math.sin(math.pi*v)**.3*(2*u-1);z=.72+.28*v
+                y=-.146+.022*abs(2*u-1)**2+.018*abs(2*v-1)**2
                 point=Vector((x,y,z));vertex=bm.verts.new(point);line.append(vertex)
                 uv_by_vertex[vertex]=denim_uv
             grid.append(line)
         for row in range(18):
             for col in range(12):
-                face=bm.faces.new((grid[row][col],grid[row][col+1],grid[row+1][col+1],grid[row+1][col]));face.material_index=0;face.smooth=True
+                face=bm.faces.new((grid[row][col],grid[row][col+1],grid[row+1][col+1],grid[row+1][col]));face.material_index=patch_index;face.smooth=True
                 for loop in face.loops:loop[uv_layer].uv=uv_by_vertex[loop.vert]
     bm.normal_update();bm.to_mesh(mesh.data);bm.free()
     print('CONTACT_BRIDGES_REMOVED',len(damaged))
