@@ -324,16 +324,15 @@ test("multi-product fixtures keep legacy anchors, upgrade overflow once and pres
 });
 
 test("store visitors have bounded counts, safe browsing spots and optional collision boundaries", async () => {
-  const { activeVisitors, visitorObstacles } =
+  const { activeVisitors, visitorObstacles, sampleVisitor } =
     await import("../src/lib/visitors.js");
   assert.equal(activeVisitors("high", true).length, 3);
   assert.equal(activeVisitors("low", true).length, 2);
   assert.equal(activeVisitors("high", false).length, 0);
   assert.deepEqual(visitorObstacles("high", false), []);
   const obstacles = visitorObstacles("high", true);
-  for (const {
-    position: [x, , z],
-  } of activeVisitors()) {
+  for (const person of activeVisitors()) {
+    const { x, z } = sampleVisitor(person);
     assert.equal(
       canOccupy(x, z),
       true,
@@ -355,4 +354,48 @@ test("store visitors have bounded counts, safe browsing spots and optional colli
     movePlayer({ x: 0, z: -7.5 }, 0, 1, obstacles).z > -6.6,
     "showing visitors around the player must not trap them",
   );
+});
+
+test("walking trolley routes stay clear of fixtures and update their collision bounds", async () => {
+  const {
+    visitors,
+    sampleVisitor,
+    trolleyPosition,
+    visitorMustYield,
+    visitorObstacles,
+    ROUTE_PERIOD,
+  } = await import("../src/lib/visitors.js");
+  for (const person of visitors.filter((p) => !p.staff)) {
+    for (let t = 0; t < ROUTE_PERIOD; t += 0.1) {
+      const pose = sampleVisitor(person, t),
+        cart = trolleyPosition(pose);
+      assert.equal(
+        canOccupy(pose.x, pose.z),
+        true,
+        "body route avoids shelves",
+      );
+      for (const dx of [-0.35, 0.35])
+        for (const dz of [-0.45, 0.45])
+          assert.equal(
+            canOccupy(cart.x + dx, cart.z + dz),
+            true,
+            "trolley envelope avoids shelves",
+          );
+    }
+    const a = sampleVisitor(person, 0),
+      b = sampleVisitor(person, 3);
+    assert.ok(Math.hypot(a.x - b.x, a.z - b.z) > 0.1);
+    assert.equal(visitorMustYield(a, { x: a.x, z: a.z }), true);
+    assert.equal(visitorMustYield(a, trolleyPosition(a)), true);
+    assert.equal(visitorMustYield(a, { x: 0, z: 11 }), false);
+    const poses = new Map([[person.id, b]]),
+      bounds = visitorObstacles("high", true, poses);
+    assert.equal(
+      canOccupy(b.x, b.z, bounds),
+      false,
+      "collision follows moving body",
+    );
+    const end = sampleVisitor(person, ROUTE_PERIOD);
+    assert.ok(Math.hypot(a.x - end.x, a.z - end.z) < 0.0001);
+  }
 });

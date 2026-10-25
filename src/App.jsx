@@ -709,8 +709,8 @@ export default function App() {
               </div>
               <h3>Store visitors</h3>
               <p>
-                Decorative shoppers and a cashier. Lightweight graphics show
-                fewer people without animation.
+                Walking shoppers with trolleys and a cashier. Lightweight
+                graphics show fewer people with simpler details.
               </p>
               <button
                 className="secondary-button"

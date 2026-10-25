@@ -17,7 +17,7 @@ test("visitors adapt to graphics quality and can be hidden without replacing the
     .click();
   await page.getByRole("button", { name: /Lightweight/ }).click();
   await expect(canvas).toHaveAttribute("data-npc-count", "2");
-  await expect(canvas).toHaveAttribute("data-npc-animated", "false");
+  await expect(canvas).toHaveAttribute("data-npc-animated", "true");
   await page
     .getByRole("button", { name: "Hide store visitors", exact: true })
     .click();
@@ -43,4 +43,42 @@ test("reduced motion keeps visitors still", async ({ page }) => {
     "data-npc-animated",
     "false",
   );
+});
+
+test("shoppers walk with trolleys in both graphics modes and pause behind panels", async ({
+  page,
+}) => {
+  await mockCms(page);
+  await page.goto("/");
+  const canvas = page.getByTestId("store-canvas");
+  const errors = [];
+  page.on("pageerror", (error) => errors.push(error.message));
+  const pose = async () =>
+    JSON.parse(await canvas.getAttribute("data-npc-shopper-pose"));
+  await expect(canvas).toHaveAttribute("data-npc-shopper-pose", /"z":/, {
+    timeout: 15000,
+  });
+  const a = await pose();
+  await expect
+    .poll(async () => Math.abs((await pose()).z - a.z), { timeout: 10000 })
+    .toBeGreaterThan(0.08);
+  await page
+    .getByRole("button", { name: "Store controls", exact: true })
+    .click();
+  await page
+    .getByRole("button", { name: "Graphics settings", exact: true })
+    .click();
+  await page.getByRole("button", { name: /Lightweight/ }).click();
+  await page.waitForTimeout(400);
+  const stopped = await pose();
+  await page.waitForTimeout(650);
+  expect((await pose()).z).toBe(stopped.z);
+  await page.getByRole("button", { name: "Close dialog", exact: true }).click();
+  await page.mouse.move(640, 360);
+  await expect
+    .poll(async () => Math.abs((await pose()).z - stopped.z), {
+      timeout: 10000,
+    })
+    .toBeGreaterThan(0.08);
+  expect(errors).toEqual([]);
 });

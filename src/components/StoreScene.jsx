@@ -8,7 +8,7 @@ import { groupedProducts, productPlacement } from "../lib/merchandising";
 import { money } from "../lib/products";
 import CarriedBasket from "./CarriedBasket";
 import StoreVisitors from "./StoreVisitors";
-import { visitorObstacles } from "../lib/visitors";
+import { visitorObstacles, visitorPoses } from "../lib/visitors";
 import { RoomEnvironment } from "three/examples/jsm/environments/RoomEnvironment.js";
 import { movement } from "../lib/controls";
 function labelTexture(
@@ -451,10 +451,6 @@ function Market() {
 function Player({ enabled, onPosition }) {
   const quality = useWorld((s) => s.quality);
   const visitorsEnabled = useWorld((s) => s.visitorsEnabled);
-  const obstacles = useMemo(
-    () => visitorObstacles(quality, visitorsEnabled),
-    [quality, visitorsEnabled],
-  );
   const elapsed = useRef(0);
   const { camera, gl } = useThree();
   const yaw = useRef(0),
@@ -609,7 +605,12 @@ function Player({ enabled, onPosition }) {
     const dz =
       (-forward * Math.cos(yaw.current) - strafe * Math.sin(yaw.current)) *
       speed;
-    const p = movePlayer(camera.position, dx, dz, obstacles);
+    const p = movePlayer(
+      camera.position,
+      dx,
+      dz,
+      visitorObstacles(quality, visitorsEnabled, visitorPoses),
+    );
     camera.position.x = p.x;
     camera.position.z = p.z;
     camera.rotation.set(pitch.current, yaw.current, 0);
@@ -676,7 +677,7 @@ export default function StoreScene({ enabled = true, onPosition }) {
       >
         <Suspense fallback={null}>
           <Market />
-          <StoreVisitors />
+          <StoreVisitors paused={paused} />
           <Player enabled={enabled} onPosition={onPosition} />
           <CarriedBasket />
         </Suspense>

@@ -79,10 +79,14 @@ Review screenshots: [clothing rails and carried basket](docs/multiple-products-b
 
 Verified for this change: 25 unit/backend tests and 26 Chromium browser tests passed (`npx playwright test --timeout=60000`), plus the production build and both Functions compilers. The nine-niche rebuild test allows 60 seconds for software WebGL. Physical-device frame rates are not verified.
 
-The store now includes two stylized browsing shoppers and a cashier behind a service desk, built with procedural geometry and no external assets/services. Beautiful graphics enables subtle idle motion; Lightweight uses two static people. Reduced motion disables animation. Open **Store controls → Graphics → Hide store visitors** to hide people and the desk for this session. Optional collision boundaries prevent walking through them, while allowing escape if visitors are re-enabled around the player. NPCs do not walk, talk, take orders or interact with customer data.
+The store includes two detailed procedural women pushing wheeled trolleys and a cashier at a service desk, with no external assets or services. Shoppers follow separate shelf-safe aisle routes, pause and turn, animate their legs and wheels, and yield to the customer. Rounded body shapes, shaped blouses/skirts, fabric texture, facial details, hair, jewelry and trolley lattice replace the original simple figures. These are illustrative procedural characters, not scanned or photorealistic people.
 
-NPC validation: 26 unit/backend tests, 15 relevant browser tests (camera/mobile/product/cart/Admin/visitor controls/reduced motion), production build and both Functions compilers passed.
+Both graphics modes support walking. Lightweight graphics shows one shopper and the cashier with simpler details. Reduced motion keeps everyone still; opening panels pauses movement without a time jump. Open **Store controls → Graphics → Hide store visitors** to hide people and the desk for this session. Collision bounds follow current body/trolley positions; NPCs do not talk, take orders or interact with customer data.
 
-[View the NPC preview](docs/store-npc-visitors.png).
+NPC validation covers route and trolley clearance, yielding, dynamic collision bounds, walking in both graphics modes, menu pauses, reduced motion and existing camera/mobile/product/cart/Admin interactions. Physical-device frame rates are not verified.
+
+Walking update checks passed: 27 unit/backend tests, 16 relevant Chromium browser tests, the production build and both Functions compilers. Browser checks explicitly verify position changes in both graphics modes and no runtime errors during walking.
+
+[View the walking shopper and trolley preview](docs/walking-women-trolleys.png).
 
 For deployment cleanup, remove the unused `HF_TOKEN` secret and `HF_SPACE_URL` variable from Cloudflare Pages, and revoke the old provider token in its account settings. If the retired integration created database tables, `migrations/0002_remove_generated_models.sql` drops only those unused tables; it preserves products/settings, admin sessions and login limits. No automatic database deletion is performed by customer requests.
