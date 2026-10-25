@@ -109,6 +109,8 @@ export const useWorld = create((set) => ({
   selected: null,
   category: "all",
   quality: "high",
+  visitorsEnabled: true,
+  setVisitorsEnabled: (visitorsEnabled) => set({ visitorsEnabled }),
   teleport: null,
   modal: null,
   locked: false,

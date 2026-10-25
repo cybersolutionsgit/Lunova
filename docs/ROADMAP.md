@@ -26,4 +26,4 @@ Separate approval and account access required. Use server-created payment sessio
 
 ## Current — multiple products and tailored fixtures
 
-External model generation and body/mannequin forms remain removed. Each of twelve fixtures now supports three independently selectable products. Clothing rails, detailed shoe racks, glazed bakery counters and other niche props retain original featured-photo tags. A hand-carried basket tracks the demo cart. NPC shoppers/cashiers are a future optional feature; keep counts bounded and mobile performance configurable.
+External model generation and body/mannequin forms remain removed. Each of twelve fixtures now supports three independently selectable products. Clothing rails, detailed shoe racks, glazed bakery counters and other niche props retain original featured-photo tags. A hand-carried basket tracks the demo cart. Three decorative NPCs are implemented: two browsing shoppers and a cashier at a service desk. Lightweight graphics uses two static people; reduced motion and a visitor visibility switch are supported. Walking routes, dialogue and NPC interactions remain future work.

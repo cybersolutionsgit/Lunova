@@ -322,3 +322,37 @@ test("multi-product fixtures keep legacy anchors, upgrade overflow once and pres
   assert.equal(many.products.filter((p) => p.display !== null).length, 36);
   assert.equal(many.products.filter((p) => p.display === null).length, 4);
 });
+
+test("store visitors have bounded counts, safe browsing spots and optional collision boundaries", async () => {
+  const { activeVisitors, visitorObstacles } =
+    await import("../src/lib/visitors.js");
+  assert.equal(activeVisitors("high", true).length, 3);
+  assert.equal(activeVisitors("low", true).length, 2);
+  assert.equal(activeVisitors("high", false).length, 0);
+  assert.deepEqual(visitorObstacles("high", false), []);
+  const obstacles = visitorObstacles("high", true);
+  for (const {
+    position: [x, , z],
+  } of activeVisitors()) {
+    assert.equal(
+      canOccupy(x, z),
+      true,
+      "visitor avoids fixed fixtures and walls",
+    );
+    assert.equal(
+      canOccupy(x, z, obstacles),
+      false,
+      "visitor body blocks walking",
+    );
+  }
+  for (const [x, , z] of Object.values(aisleSpawns))
+    assert.equal(canOccupy(x, z, obstacles), true);
+  const moved = movePlayer({ x: 0, z: -6.6 }, 0, -2, obstacles);
+  assert.ok(moved.z > -7.15, "service desk stops forward movement");
+  assert.equal(canOccupy(0, -7.5, obstacles), false);
+  assert.equal(canOccupy(0, -7.5, []), true);
+  assert.ok(
+    movePlayer({ x: 0, z: -7.5 }, 0, 1, obstacles).z > -6.6,
+    "showing visitors around the player must not trap them",
+  );
+});

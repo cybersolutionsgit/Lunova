@@ -69,6 +69,8 @@ export default function App() {
     setModal: openModal,
     quality,
     setQuality,
+    visitorsEnabled,
+    setVisitorsEnabled,
     goTo,
     locked,
     notice,
@@ -705,6 +707,20 @@ export default function App() {
                   </button>
                 ))}
               </div>
+              <h3>Store visitors</h3>
+              <p>
+                Decorative shoppers and a cashier. Lightweight graphics show
+                fewer people without animation.
+              </p>
+              <button
+                className="secondary-button"
+                aria-pressed={visitorsEnabled}
+                onClick={() => setVisitorsEnabled(!visitorsEnabled)}
+              >
+                {visitorsEnabled
+                  ? "Hide store visitors"
+                  : "Show store visitors"}
+              </button>
               <div className="demo-note">
                 <VolumeX size={18} />
                 <p>

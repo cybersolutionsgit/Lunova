@@ -19,25 +19,36 @@ export const colliders = displays.map(({ position: [x, z], rotation }) => {
     d = side ? 1.2 : 0.65;
   return { minX: x - w, maxX: x + w, minZ: z - d, maxZ: z + d };
 });
-export function canOccupy(x, z) {
+export function canOccupy(x, z, obstacles = []) {
   const r = 0.32;
   return (
     x > -9.5 + r &&
     x < 9.5 - r &&
     z > -9 + r &&
     z < 12 - r &&
-    !colliders.some(
+    ![...colliders, ...obstacles].some(
       (b) =>
         x > b.minX - r && x < b.maxX + r && z > b.minZ - r && z < b.maxZ + r,
     )
   );
 }
-export function movePlayer(position, dx, dz) {
+export function movePlayer(position, dx, dz, obstacles = []) {
+  // Showing visitors while standing in their hidden spot must allow an exit.
+  // Fixed store fixtures always keep their normal collision boundaries.
+  const activeObstacles = obstacles.filter(
+    (b) =>
+      !(
+        position.x > b.minX - 0.32 &&
+        position.x < b.maxX + 0.32 &&
+        position.z > b.minZ - 0.32 &&
+        position.z < b.maxZ + 0.32
+      ),
+  );
   const n = Math.max(1, Math.ceil(Math.max(Math.abs(dx), Math.abs(dz)) / 0.12));
   let { x, z } = position;
   for (let i = 0; i < n; i++) {
-    if (canOccupy(x + dx / n, z)) x += dx / n;
-    if (canOccupy(x, z + dz / n)) z += dz / n;
+    if (canOccupy(x + dx / n, z, activeObstacles)) x += dx / n;
+    if (canOccupy(x, z + dz / n, activeObstacles)) z += dz / n;
   }
   return { x, z };
 }
