@@ -1,4 +1,3 @@
-import { handleSketchfab } from "./sketchfab.js";
 import { defaultCatalog } from "../src/lib/products.js";
 import { validateCatalog } from "../src/lib/catalog.js";
 import { defaultSettings, validateSettings } from "../src/lib/shop.js";
@@ -244,18 +243,6 @@ export async function handleApi(req, env = {}) {
           409,
         );
       return json({ catalog, settings, revision: body.revision + 1 });
-    }
-    if (path === "/api/sketchfab/callback") return handleSketchfab(req, env);
-    if (path.startsWith("/api/admin/sketchfab/")) {
-      if (!configured(env))
-        return json({ error: "Admin setup is incomplete." }, 503);
-      if (!(await session(req, env)))
-        return json({ error: "Please log in as the administrator." }, 401);
-      if (req.method !== "GET" && !sameOrigin(req))
-        return json({ error: "Request origin is not allowed." }, 403);
-      return handleSketchfab(req, env, {
-        sessionHash: await sha(tokenFrom(req) + ":" + env.ADMIN_PASSWORD),
-      });
     }
     return json({ error: "Not found." }, 404);
   } catch {

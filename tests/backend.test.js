@@ -302,20 +302,3 @@ test("retired asset table cleanup preserves the catalog and administrator tables
       null,
     );
 });
-
-test("Sketchfab routes are admin-only and cross-site mutations are denied", async () => {
-  assert.equal(
-    (await request("/api/admin/sketchfab/search?q=supermarket%20shelf")).status,
-    401,
-  );
-  const login = await request("/api/admin/login", {
-    method: "POST",
-    body: JSON.stringify({ username, password }),
-  });
-  const auth = login.headers.get("Set-Cookie").split(";")[0];
-  const rejected = await request("/api/admin/sketchfab/connect", {
-    method: "POST",
-    headers: { Cookie: auth, Origin: "https://attacker.test" },
-  });
-  assert.equal(rejected.status, 403);
-});
