@@ -740,7 +740,7 @@ export default function App() {
                   <h3>Wander at your own pace</h3>
                   <p>
                     Use W A S D or the arrow keys to walk. On touch screens,
-                    touch and drag anywhere in the store to walk. The joystick
+                    drag the lower half of the store to walk. The joystick
                     appears while held and hides when released.
                   </p>
                 </section>
@@ -753,9 +753,9 @@ export default function App() {
                     Click “Click to look around” to keep your cursor centred
                     while looking. Press Esc to release it for menus. Hold a
                     mouse button to pause looking; release to resume. On touch
-                    screens, drag to walk. Click a product photo to see its
-                    details. Optional mouse capture lets you turn continuously;
-                    press Esc to release it.
+                    screens, drag the upper half to look around. Tap a product
+                    photo to see its details. Optional mouse capture lets you
+                    turn continuously; press Esc to release it.
                   </p>
                 </section>
               </div>

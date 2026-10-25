@@ -5,6 +5,7 @@ import { movement } from "../lib/controls";
 export default function TouchJoystick({ active }) {
   const pointer = useRef(null);
   const origin = useRef(null);
+  const looking = useRef(false);
   const [anchor, setAnchor] = useState(null);
   const [offset, setOffset] = useState({ x: 0, y: 0 });
   useEffect(() => {
@@ -13,6 +14,7 @@ export default function TouchJoystick({ active }) {
     const reset = () => {
       pointer.current = null;
       origin.current = null;
+      looking.current = false;
       setAnchor(null);
       setOffset({ x: 0, y: 0 });
       for (const direction of Object.keys(movement)) movement[direction] = 0;
@@ -31,17 +33,21 @@ export default function TouchJoystick({ active }) {
       pointer.current = event.pointerId;
       origin.current = { x: event.clientX, y: event.clientY };
       dragged = false;
-      setAnchor(origin.current);
+      const bounds = event.target.getBoundingClientRect();
+      looking.current = event.clientY < bounds.top + bounds.height / 2;
+      if (!looking.current) setAnchor(origin.current);
       event.target.setPointerCapture(event.pointerId);
     };
     const move = (event) => {
       if (event.pointerId !== pointer.current || !origin.current) return;
       event.preventDefault();
-      event.stopPropagation();
+      if (!looking.current) event.stopPropagation();
       const x = event.clientX - origin.current.x;
       const y = event.clientY - origin.current.y;
       const distance = Math.hypot(x, y);
       if (distance > 6) dragged = true;
+      // Upper-half drags continue to the camera handler; never walk.
+      if (looking.current) return;
       const scale = Math.min(1, 38 / (distance || 1));
       setOffset({ x: x * scale, y: y * scale });
       const strength = Math.max(0, (Math.min(distance / 38, 1) - 0.16) / 0.84);

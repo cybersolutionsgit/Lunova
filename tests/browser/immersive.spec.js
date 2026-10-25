@@ -154,7 +154,7 @@ test("product popups remain inside browser full screen", async ({ page }) => {
     .getByRole("button", { name: "Exit full screen", exact: true })
     .click();
 });
-test("mobile drag anywhere walks without opening a product or turning the camera", async ({
+test("mobile lower-half drag walks without opening a product or turning the camera", async ({
   browser,
 }) => {
   const context = await browser.newContext({
@@ -169,11 +169,11 @@ test("mobile drag anywhere walks without opening a product or turning the camera
   const session = await context.newCDPSession(page);
   await session.send("Input.dispatchTouchEvent", {
     type: "touchStart",
-    touchPoints: [{ x: 180, y: 400 }],
+    touchPoints: [{ x: 180, y: 600 }],
   });
   await session.send("Input.dispatchTouchEvent", {
     type: "touchMove",
-    touchPoints: [{ x: 245, y: 425 }],
+    touchPoints: [{ x: 245, y: 625 }],
   });
   await session.send("Input.dispatchTouchEvent", {
     type: "touchEnd",
@@ -273,7 +273,7 @@ test("touch joystick walks, keeps camera steady and stops on release or collapse
   await expect(marker).toHaveAttribute("data-z", "9.00");
   const session = await context.newCDPSession(page);
   const x = 100,
-    y = 350; // Deliberately outside the former lower-right region.
+    y = 600; // Lower half, independent of horizontal position.
   await session.send("Input.dispatchTouchEvent", {
     type: "touchStart",
     touchPoints: [{ x, y }],
@@ -353,7 +353,7 @@ test("a narrow desktop does not activate touch joystick with mouse dragging", as
   await page.mouse.up();
 });
 
-test("mobile taps still select 3D products with full-screen joystick enabled", async ({
+test("mobile taps still select 3D products with split touch controls", async ({
   browser,
 }) => {
   const context = await browser.newContext({
@@ -434,4 +434,45 @@ test("cursor position maps to a full panorama and realigns after leaving or clos
       Math.abs(Number(await canvas.getAttribute("data-look-yaw"))),
     )
     .toBeGreaterThan(3);
+});
+
+test("upper-half touch drag rotates without walking or showing the joystick", async ({
+  browser,
+}) => {
+  const context = await browser.newContext({
+    viewport: { width: 390, height: 844 },
+    isMobile: true,
+    hasTouch: true,
+  });
+  const page = await context.newPage();
+  await page.goto("/");
+  const canvas = page.getByTestId("store-canvas");
+  await expect(canvas).toHaveAttribute("data-look-yaw", "0");
+  const marker = page.getByTestId("player-marker");
+  const before = await marker.getAttribute("data-z");
+  const session = await context.newCDPSession(page);
+  await session.send("Input.dispatchTouchEvent", {
+    type: "touchStart",
+    touchPoints: [{ x: 110, y: 230 }],
+  });
+  await session.send("Input.dispatchTouchEvent", {
+    type: "touchMove",
+    touchPoints: [{ x: 210, y: 280 }],
+  });
+  await expect(canvas).not.toHaveAttribute("data-look-yaw", "0");
+  await expect(page.getByTestId("touch-joystick")).toHaveCount(0);
+  await expect(marker).toHaveAttribute("data-z", before);
+  // Crossing into the walking half must not change ownership mid-gesture.
+  await session.send("Input.dispatchTouchEvent", {
+    type: "touchMove",
+    touchPoints: [{ x: 210, y: 550 }],
+  });
+  await expect(page.getByTestId("touch-joystick")).toHaveCount(0);
+  await session.send("Input.dispatchTouchEvent", {
+    type: "touchEnd",
+    touchPoints: [],
+  });
+  await expect(marker).toHaveAttribute("data-z", before);
+  await expect(page.getByRole("dialog")).toHaveCount(0);
+  await context.close();
 });

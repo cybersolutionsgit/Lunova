@@ -280,7 +280,7 @@ function Market() {
     gl.domElement.dataset.storeType = settings.type;
     gl.domElement.setAttribute(
       "aria-label",
-      `${settings.name}: ${settings.type} virtual store. Use WASD to walk; click Click to look around to capture the mouse, or drag to walk on touch screens.`,
+      `${settings.name}: ${settings.type} virtual store. Use WASD to walk; click Click to look around to capture the mouse, or drag the lower half to walk and the upper half to look on touch screens.`,
     );
   }, [gl, settings.type, settings.name]);
   const products = useCatalog((s) => s.products);
@@ -553,11 +553,17 @@ function Player({ enabled, onPosition }) {
       );
     };
     const start = (e) => {
-      if (!blocked)
+      const bounds = gl.domElement.getBoundingClientRect();
+      if (
+        !blocked &&
+        e.pointerType === "touch" &&
+        e.clientY < bounds.top + bounds.height / 2 &&
+        !drag.current
+      )
         drag.current = { x: e.clientX, y: e.clientY, id: e.pointerId };
     };
-    const stop = () => {
-      drag.current = null;
+    const stop = (e) => {
+      if (drag.current?.id === e.pointerId) drag.current = null;
     };
     const leave = () => {
       hover.current = null;
@@ -670,7 +676,7 @@ export default function StoreScene({ enabled = true, onPosition }) {
         onCreated={({ gl }) => {
           gl.domElement.setAttribute(
             "aria-label",
-            "Interactive 3D lingerie boutique. Use WASD to move. Click Click to look around to capture the mouse; Escape releases it. Drag to walk on touch screens and click products to inspect them.",
+            "Interactive 3D lingerie boutique. Use WASD to move. Click Click to look around to capture the mouse; Escape releases it. Drag the lower half to walk and the upper half to look on touch screens; tap products to inspect them.",
           );
           gl.domElement.setAttribute("data-testid", "store-canvas");
         }}
