@@ -76,3 +76,7 @@ public/models/sketchfab/d81314a29e3943d88a6ee1426021a177 holds the CC BY 4.0 Gra
 ImportedShopper creates mixer actions inside effect setup, not memoized across stop/uncache cleanup: React Strict Mode replays effects and stale actions can crash the mixer. Keep the per-asset error boundary/procedural fallback, no product raycast interception, local-only URLs, quality/reduced-motion/menu-pause behavior and matching trolley collision bounds. No external image-generation service or Sketchfab CMS UI is involved.
 
 Bundled GLB textures are decoded through blob URLs by GLTFLoader/ImageBitmapLoader. Keep `blob:` in the production CSP `connect-src` as well as existing image rules. Local Vite defaults do not apply public/_headers; the model browser test injects the production connection policy (plus the dev-only HMR socket) to catch blocked textures. Live verification must inspect texture/CSP console errors, not only successful model loading and animation flags.
+
+## Paused arm-pose work
+
+The owner asked to save and stop the two-handed trolley pose work. Read docs/TROLLEY_POSE_CHECKPOINT.md before resuming. Current staged push-model GLBs have known visual defects and lag behind the latest Blender repair script. Do not publish them or call the pose finished; continue only when the owner asks to resume. Local source/Blender review files are preserved under ignored .workbench/shopper-trolley-pose/.

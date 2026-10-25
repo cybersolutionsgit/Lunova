@@ -1,2 +1,2 @@
 model an jeans by Grauwolf (https://sketchfab.com/Grauwolf). Source: https://sketchfab.com/3d-models/d81314a29e3943d88a6ee1426021a177. License: CC Attribution (https://creativecommons.org/licenses/by/4.0/).
-Adapted for Lunova: normalized scale and floor origin, reduced topology, resized/compressed original textures, added a lower-body skeleton and an in-place walking animation. Original upper-body pose and creator credit retained.
+Adapted for Lunova: normalized scale/origin, lighter geometry/textures, lower-body skeleton and walking loop, both arms reposed to the trolley handle, repaired original hand/head and hand/thigh contact surfaces, and restored the small denim contact area. Face, creator credit and license retained.

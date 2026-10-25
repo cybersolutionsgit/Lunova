@@ -5,11 +5,13 @@ Modifications: scale/origin normalization, decimation, texture resizing, lower-b
 """
 import bpy, math, pathlib, sys, json
 from mathutils import Vector
+sys.path.insert(0,str(pathlib.Path(__file__).resolve().parent))
+from shopper_pose import repose_arms
 source, output = sys.argv[sys.argv.index('--') + 1:][:2]
 output = pathlib.Path(output); output.mkdir(parents=True, exist_ok=True)
 def smooth(value):
     v=max(0,min(1,value)); return v*v*(3-2*v)
-for name, ratio, color_size in [('shopper',.18,1024),('shopper-low',.065,512)]:
+for name, ratio, color_size in [('shopper-push',.18,1024),('shopper-push-low',.065,512)]:
     bpy.ops.wm.read_factory_settings(use_empty=True)
     bpy.ops.import_scene.gltf(filepath=source)
     mesh = next(o for o in bpy.context.scene.objects if o.type == 'MESH')
@@ -20,6 +22,7 @@ for name, ratio, color_size in [('shopper',.18,1024),('shopper-low',.065,512)]:
     offset=Vector(((lo.x+hi.x)/2,(lo.y+hi.y)/2,lo.z)); scale=1.72/(hi.z-lo.z)
     for vertex in mesh.data.vertices: vertex.co=(vertex.co-offset)*scale
     mesh.data.update()
+    repose_arms(mesh)
     mod=mesh.modifiers.new('Mobile topology budget','DECIMATE'); mod.ratio=ratio
     bpy.ops.object.modifier_apply(modifier=mod.name)
     mesh.name='Grauwolf_Jeans_Shopper'

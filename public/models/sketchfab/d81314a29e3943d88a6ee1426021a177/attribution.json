@@ -14,19 +14,32 @@
   "downloadAuthorization": "official-sketchfab-download",
   "sourceArchiveSha256": "a02e34e97d6f3324082c5568d4ade0e3e1210b49706dfe6a7440ab78877ceead",
   "retrievedAt": "2026-10-25T12:30:41.390Z",
-  "asset": "/models/sketchfab/d81314a29e3943d88a6ee1426021a177/shopper.glb",
+  "asset": "/models/sketchfab/d81314a29e3943d88a6ee1426021a177/shopper-push.glb",
   "attribution": "model an jeans by Grauwolf (https://sketchfab.com/Grauwolf). Source: https://sketchfab.com/3d-models/d81314a29e3943d88a6ee1426021a177. License: CC Attribution (https://creativecommons.org/licenses/by/4.0/).",
   "importedAt": "2026-10-25T12:30:41.640Z",
-  "modifications": "Adapted for Lunova: normalized scale and floor origin, reduced topology, resized/compressed original textures, added a lower-body skeleton and an in-place walking animation. Original upper-body pose and creator credit retained.",
-  "lowAsset": "/models/sketchfab/d81314a29e3943d88a6ee1426021a177/shopper-low.glb",
+  "modifications": "Adapted for Lunova: normalized scale/origin, lighter geometry/textures, lower-body skeleton and walking loop, both arms reposed to the trolley handle, repaired original hand/head and hand/thigh contact surfaces, and restored the small denim contact area. Face, creator credit and license retained.",
+  "lowAsset": "/models/sketchfab/d81314a29e3943d88a6ee1426021a177/shopper-push-low.glb",
   "variants": {
     "desktop": {
-      "triangles": 60093,
-      "bytes": 3855616
+      "triangles": 59916,
+      "bytes": 3087972
     },
     "lightweight": {
-      "triangles": 21699,
-      "bytes": 1802336
+      "triangles": 21630,
+      "bytes": 1443220
     }
-  }
+  },
+  "pose": "two-hands-on-trolley",
+  "gripTargets": [
+    [
+      -0.205,
+      1.04,
+      0.28
+    ],
+    [
+      0.205,
+      1.04,
+      0.28
+    ]
+  ]
 }

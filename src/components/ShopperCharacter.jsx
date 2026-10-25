@@ -297,7 +297,7 @@ export default function ShopperCharacter({ person, detail, animate, paused }) {
       cart = trolleyPosition(pose);
     const rolled = Math.hypot(cart.x - previousCart.x, cart.z - previousCart.z);
     for (const wheel of wheels.current)
-      if (wheel) wheel.rotation.x += rolled / (staff ? 0.085 : 0.0714);
+      if (wheel) wheel.rotation.x += rolled / 0.085;
     if (head.current)
       head.current.rotation.y =
         animate && !paused && detail
@@ -596,7 +596,7 @@ export default function ShopperCharacter({ person, detail, animate, paused }) {
         />
       )}
       {!staff && (
-        <group position={[-0.025, 0, -0.2012]} scale={0.84}>
+        <group position={[0, 0, -0.15]}>
           <Trolley detail={detail} wheels={wheels} />
         </group>
       )}

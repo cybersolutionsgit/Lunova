@@ -5,7 +5,7 @@ import { clone } from "three/examples/jsm/utils/SkeletonUtils.js";
 import { AnimationMixer, MathUtils } from "three";
 export const JEANS_MODEL_ID = "d81314a29e3943d88a6ee1426021a177";
 export const shopperAsset = (detail) =>
-  `/models/sketchfab/${JEANS_MODEL_ID}/${detail ? "shopper" : "shopper-low"}.glb`;
+  `/models/sketchfab/${JEANS_MODEL_ID}/${detail ? "shopper-push" : "shopper-push-low"}.glb`;
 const noRaycast = () => null;
 class AssetBoundary extends Component {
   state = { failed: false };
