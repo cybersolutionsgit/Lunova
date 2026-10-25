@@ -134,7 +134,7 @@ test("WooCommerce import uses featured photos, currency and integer minor-unit p
   assert.equal(c.products[0].description, "Soft lace .");
   assert.equal(plainText("&#x2764; &quot;Lace&quot;"), '❤ "Lace"');
 });
-test("imports preserve catalog-only overflow and sold-out state without claiming live stock", () => {
+test("imports use new fixture positions and preserve sold-out state without claiming live stock", () => {
   const rows = Array.from({ length: 15 }, (_, i) => ({
     ...woo(i + 1),
     is_in_stock: i !== 0,
@@ -143,7 +143,8 @@ test("imports preserve catalog-only overflow and sold-out state without claiming
   assert.equal(c.products.length, 15);
   assert.equal(c.products[0].stock, 0);
   assert.equal(c.products[11].display, 11);
-  assert.equal(c.products[12].display, null);
+  assert.equal(c.products[12].display, 0);
+  assert.equal(c.products[12].displaySlot, 1);
   assert.throws(() => fromWooCommerce([]));
   assert.throws(() =>
     fromWooCommerce([{ ...woo(), prices: { ...woo().prices, price: "" } }]),
@@ -211,7 +212,7 @@ test("published catalog uses the supplied 21 real PKR products and featured imag
   }
   assert.equal(
     publishedCatalog.products.filter((p) => p.display !== null).length,
-    12,
+    21,
   );
 });
 test("new store categories and settings validate without silently deleting old collections", async () => {
@@ -274,4 +275,50 @@ test("photo-only catalogs discard retired asset fields while preserving product 
   assert.equal(clean.image, product.image);
   assert.equal(clean.name, product.name);
   assert.equal(clean.price, product.price);
+});
+
+test("multi-product fixtures keep legacy anchors, upgrade overflow once and preserve catalog-only choices afterward", () => {
+  const legacy = {
+    ...publishedCatalog,
+    layoutVersion: undefined,
+    products: publishedCatalog.products.map((p, i) => ({
+      ...p,
+      display: i < 12 ? i : null,
+    })),
+  };
+  const upgraded = validateCatalog(legacy);
+  assert.equal(upgraded.layoutVersion, 2);
+  assert.equal(upgraded.products[0].display, 0);
+  assert.equal(upgraded.products[0].displaySlot, 0);
+  assert.equal(upgraded.products[12].display, 0);
+  assert.equal(upgraded.products[12].displaySlot, 1);
+  assert.equal(upgraded.products.filter((p) => p.display !== null).length, 21);
+  const edited = {
+    ...upgraded,
+    products: upgraded.products.map((p, i) =>
+      i === 12 ? { ...p, display: null } : p,
+    ),
+  };
+  assert.equal(validateCatalog(edited).products[12].display, null);
+  const pair = [
+    { ...upgraded.products[0], display: 0, displaySlot: 0 },
+    { ...upgraded.products[1], display: 0, displaySlot: 1 },
+  ];
+  assert.equal(
+    validateCatalog({ ...upgraded, products: pair }).products.length,
+    2,
+  );
+  assert.throws(
+    () =>
+      validateCatalog({
+        ...upgraded,
+        products: [pair[0], { ...pair[1], displaySlot: 0 }],
+      }),
+    /same display position/,
+  );
+  const many = fromWooCommerce(
+    Array.from({ length: 40 }, (_, i) => woo(i + 100)),
+  );
+  assert.equal(many.products.filter((p) => p.display !== null).length, 36);
+  assert.equal(many.products.filter((p) => p.display === null).length, 4);
 });

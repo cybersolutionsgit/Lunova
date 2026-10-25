@@ -1,3 +1,4 @@
+import { upgradeLayout } from "./merchandising.js";
 import { currencyScale } from "./products.js";
 import { allCategories as categories } from "./shop.js";
 export const CATALOG_KEY = "lunova-boutique-catalog-v1";
@@ -46,6 +47,7 @@ const fail = (message) => {
 export function validateCatalog(input) {
   if (!input || input.version !== 1 || !Array.isArray(input.products))
     fail("Choose a Lunova catalog JSON file (version 1).");
+  input = upgradeLayout(input);
   if (input.products.length > MAX_PRODUCTS)
     fail(`Use a maximum of ${MAX_PRODUCTS} products.`);
   const currency = String(input.currency || "USD").toUpperCase();
@@ -83,12 +85,15 @@ export function validateCatalog(input) {
       (!Number.isInteger(p.display) || p.display < 0 || p.display > 11)
     )
       fail(`Choose a display from 1 to 12 for ${name}.`);
+    const displaySlot = p.displaySlot ?? 0;
+    if (!Number.isInteger(displaySlot) || displaySlot < 0 || displaySlot > 2)
+      fail(`Choose a position from 1 to 3 for ${name}.`);
     if (p.display !== null) {
-      if (slots.has(p.display))
+      if (slots.has(`${p.display}:${displaySlot}`))
         fail(
-          "Two products cannot use the same display. Choose another display or catalog only.",
+          "Two products cannot use the same display position. Choose another position or catalog only.",
         );
-      slots.add(p.display);
+      slots.add(`${p.display}:${displaySlot}`);
     }
     const image = safeImage(p.image);
     if (!image) fail(`Use an HTTPS image URL or upload a photo for ${name}.`);
@@ -104,6 +109,7 @@ export function validateCatalog(input) {
       ...(p.originalImage ? { originalImage: safeImage(p.originalImage) } : {}),
       stock: p.stock,
       display: p.display,
+      displaySlot,
       presentation: "photo",
       tag: plainText(p.tag).slice(0, 40),
       sourceUrl: safeLink(p.sourceUrl),
@@ -111,6 +117,7 @@ export function validateCatalog(input) {
   });
   const result = {
     version: 1,
+    layoutVersion: 2,
     currency,
     source:
       input.source === "woocommerce"

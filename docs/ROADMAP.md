@@ -6,7 +6,7 @@ A viewport-filling 3D store, mouse-hover camera look, WASD/touch walking, collis
 
 ## Current — protected shared CMS
 
-Customer Customize controls are removed. Sidebar Admin opens server-checked username/password login with no signup. Pages Functions + D1 provide shared catalog/settings publishing. Nine niche fixtures and collections are implemented: boutique glass photo cases, shoes, bakery counters, supermarket shelves, beauty, jewelry, electronics, furniture and general store. Edit details, logo, theme, products, display slots and demo quantity limits. Changing niche preserves products. Decorative models are not exact SKU models.
+Customer Customize controls are removed. Sidebar Admin opens server-checked username/password login with no signup. Pages Functions + D1 provide shared catalog/settings publishing. Nine niche fixtures and collections are implemented: clothing rails with individual photo tags, shoes, bakery counters, supermarket shelves, beauty, jewelry, electronics, furniture and general store. Edit details, logo, theme, products, display slots and demo quantity limits. Changing niche preserves products. Decorative models are not exact SKU models.
 
 Local D1 authorization tests, browser UI checks and a combined local Pages/D1 integration are verified. Production database creation, migration, DB binding and the ADMIN_PASSWORD server secret require the owner's Cloudflare account. Finish CMS_SETUP.md, review/merge, deploy, and verify live as admin and in a separate customer session. Do not call production CMS active until that succeeds.
 
@@ -24,6 +24,6 @@ Only after explicit owner approval: sizes/variants, real stock management, authe
 
 Separate approval and account access required. Use server-created payment sessions, signature-verified webhooks and idempotency. Never store card data or expose secret keys in frontend configuration.
 
-## Current owner direction — photo displays
+## Current — multiple products and tailored fixtures
 
-Remove external model generation and boutique mannequin forms. Keep large featured photos in the cases and retain existing shelf/counter props for other niches. The next changes are owner-directed shelf styling and procedural display detailing.
+External model generation and body/mannequin forms remain removed. Each of twelve fixtures now supports three independently selectable products. Clothing rails, detailed shoe racks, glazed bakery counters and other niche props retain original featured-photo tags. A hand-carried basket tracks the demo cart. NPC shoppers/cashiers are a future optional feature; keep counts bounded and mobile performance configurable.

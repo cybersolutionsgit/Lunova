@@ -3,7 +3,11 @@ import { Canvas, events, useFrame, useThree } from "@react-three/fiber";
 import * as THREE from "three";
 import { useWorld, useCatalog } from "../lib/store";
 import { displays, movePlayer } from "../lib/world";
-import { FixtureShell, FixtureProps, photoPosition } from "./StoreFixtures";
+import { FixtureShell, FixtureProps } from "./StoreFixtures";
+import { groupedProducts, productPlacement } from "../lib/merchandising";
+import { money } from "../lib/products";
+import CarriedBasket from "./CarriedBasket";
+import { RoomEnvironment } from "three/examples/jsm/environments/RoomEnvironment.js";
 import { movement } from "../lib/controls";
 function labelTexture(
   text,
@@ -176,51 +180,68 @@ function Hanger({ position }) {
     </group>
   );
 }
-function Display({ fixture, index, product, map }) {
-  const select = useWorld((s) => s.select);
-  const settings = useCatalog((s) => s.settings);
+function Display({ fixture, index, products, maps }) {
+  const select = useWorld((s) => s.select),
+    quality = useWorld((s) => s.quality);
+  const settings = useCatalog((s) => s.settings),
+    currency = useCatalog((s) => s.currency);
   const { type, theme } = settings;
-  const photo = photoPosition(type);
   return (
     <group
       position={[fixture.position[0], 0, fixture.position[1]]}
       rotation={[0, fixture.rotation, 0]}
-      onClick={(e) => {
-        if (product) {
-          e.stopPropagation();
-          if (e.delta < 6) select(product);
-        }
-      }}
-      onPointerOver={(e) => {
-        if (product) {
-          e.stopPropagation();
-          document.body.style.cursor = "pointer";
-        }
-      }}
-      onPointerOut={() => (document.body.style.cursor = "auto")}
     >
       <FixtureShell type={type} theme={theme} />
       <Sign
-        text={`${String(index + 1).padStart(2, "0")} · ${product ? product.name : "Your next favorite"}`}
-        position={[0, 3.15, 0]}
+        text={`${String(index + 1).padStart(2, "0")} · ${products.length ? products.length + " products" : "New collection"}`}
+        position={[
+          0,
+          type === "boutique" || type === "shoes" || type === "mart"
+            ? 3.15
+            : 2.4,
+          0,
+        ]}
         width={2.25}
       />
-      {product && (
-        <group
-          onClick={(e) => {
-            e.stopPropagation();
-            if (e.delta < 6) select(product);
-          }}
-          onPointerOver={(e) => {
-            e.stopPropagation();
-            document.body.style.cursor = "pointer";
-          }}
-          onPointerOut={() => (document.body.style.cursor = "auto")}
-        >
-          <FixtureProps type={type} product={product} />
-          <Photo map={map} position={photo.position} width={photo.width} />
-        </group>
-      )}
+      {products.map((product) => {
+        const layout = productPlacement(type, product.displaySlot ?? 0);
+        return (
+          <group
+            key={product.id}
+            onClick={(e) => {
+              e.stopPropagation();
+              if (e.delta < 6) select(product);
+            }}
+            onPointerOver={(e) => {
+              e.stopPropagation();
+              document.body.style.cursor = "pointer";
+            }}
+            onPointerOut={() => (document.body.style.cursor = "auto")}
+          >
+            <group position={layout.prop}>
+              <FixtureProps
+                type={type}
+                product={product}
+                detail={quality === "high"}
+              />
+            </group>
+            <Photo
+              map={maps[product.id]?.texture}
+              position={layout.photo}
+              width={layout.width}
+            />
+            <Sign
+              text={`${product.name.slice(0, 21)} · ${money(product.price, currency)}`}
+              position={[
+                layout.photo[0],
+                layout.photo[1] - layout.width * 0.668 - 0.1,
+                layout.photo[2] + 0.02,
+              ]}
+              width={layout.width + 0.07}
+            />
+          </group>
+        );
+      })}
     </group>
   );
 }
@@ -250,7 +271,7 @@ function Plant({ position }) {
   );
 }
 function Market() {
-  const { gl } = useThree();
+  const { gl, scene } = useThree();
   const settings = useCatalog((s) => s.settings);
   const { theme } = settings;
   useEffect(() => {
@@ -263,6 +284,31 @@ function Market() {
   const products = useCatalog((s) => s.products);
   const maps = useProductMaps(products);
   const quality = useWorld((s) => s.quality);
+  const groups = useMemo(() => groupedProducts(products), [products]);
+  useEffect(() => {
+    gl.domElement.dataset.displayedProducts = String(
+      products.filter((p) => p.display !== null).length,
+    );
+    gl.domElement.dataset.fixtureOccupancy = JSON.stringify(
+      groups.map((group) => group.length),
+    );
+  }, [gl, products, groups]);
+  useEffect(() => {
+    if (quality !== "high") {
+      scene.environment = null;
+      return;
+    }
+    const generator = new THREE.PMREMGenerator(gl),
+      room = new RoomEnvironment();
+    const target = generator.fromScene(room, 0.04);
+    scene.environment = target.texture;
+    room.dispose();
+    generator.dispose();
+    return () => {
+      scene.environment = null;
+      target.dispose();
+    };
+  }, [gl, scene, quality]);
   const floorMap = useMemo(() => {
     const c = document.createElement("canvas");
     c.width = c.height = 256;
@@ -369,18 +415,15 @@ function Market() {
           ))}
         </group>
       ))}
-      {displays.map((fixture, index) => {
-        const product = products.find((p) => p.display === index);
-        return (
-          <Display
-            key={index}
-            fixture={fixture}
-            index={index}
-            product={product}
-            map={product && maps[product.id]?.texture}
-          />
-        );
-      })}
+      {displays.map((fixture, index) => (
+        <Display
+          key={index}
+          fixture={fixture}
+          index={index}
+          products={groups[index]}
+          maps={maps}
+        />
+      ))}
       <mesh position={[0, 0.012, 7.5]} rotation={[-Math.PI / 2, 0, 0]}>
         <circleGeometry args={[2, 64]} />
         <meshStandardMaterial color="#cba9a5" roughness={1} />
@@ -590,10 +633,14 @@ class SceneBoundary extends Component {
   }
 }
 export default function StoreScene({ enabled = true, onPosition }) {
+  const selected = useWorld((s) => s.selected),
+    modal = useWorld((s) => s.modal);
+  const paused = !enabled || !!selected || !!modal;
   const quality = useWorld((s) => s.quality);
   return (
     <SceneBoundary>
       <Canvas
+        frameloop={paused ? "demand" : "always"}
         events={(state) => ({
           ...events(state),
           compute: (event, root) => {
@@ -622,6 +669,7 @@ export default function StoreScene({ enabled = true, onPosition }) {
         <Suspense fallback={null}>
           <Market />
           <Player enabled={enabled} onPosition={onPosition} />
+          <CarriedBasket />
         </Suspense>
       </Canvas>
     </SceneBoundary>

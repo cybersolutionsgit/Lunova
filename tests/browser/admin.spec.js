@@ -35,6 +35,8 @@ test("customers have no customize controls and admin is login-only with no signu
 test("authenticated settings publish all nine niche environments and theme/details", async ({
   page,
 }) => {
+  // Nine scene rebuilds can exceed the default timeout under software WebGL.
+  test.setTimeout(60000);
   await mockCms(page);
   await page.goto("/");
   await openAdmin(page);

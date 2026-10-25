@@ -48,7 +48,7 @@ import TouchJoystick from "./components/TouchJoystick";
 import Modal from "./components/Modal";
 import ProductArt from "./components/ProductArt";
 import { getCollections, STORE_TYPES, contrastColor } from "./lib/shop";
-const AdminPanel = lazy(() => import("./components/AdminPanel"));
+import AdminPanel from "./components/AdminPanel";
 const StoreScene = lazy(() => import("./components/StoreScene"));
 const icons = {
   grid: Grid2X2,

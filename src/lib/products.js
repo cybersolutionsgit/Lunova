@@ -1,4 +1,7 @@
-import seed from "../data/catalog.js";
+import rawSeed from "../data/catalog.js";
+import rawSamples from "../data/sample-catalog.js";
+import { upgradeLayout } from "./merchandising.js";
+const seed = upgradeLayout(rawSeed);
 export const categories = [
   { id: "all", name: "All collections", icon: "grid" },
   { id: "sets", name: "Lingerie sets", icon: "heart" },
@@ -19,4 +22,4 @@ export const currencyScale = (currency = "USD") =>
   new Intl.NumberFormat("en", { style: "currency", currency }).resolvedOptions()
     .maximumFractionDigits;
 
-export { default as sampleCatalog } from "../data/sample-catalog.js";
+export const sampleCatalog = upgradeLayout(rawSamples);

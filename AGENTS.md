@@ -9,7 +9,7 @@ Lunova Secrets is a browser-based 3D lingerie boutique, replacing the original g
 - `src/App.jsx`: immersive viewport shell with a permanently mounted scene, collapsible overlay sidebar, popup catalog/details/cart/settings and guidance.
 - `src/components/StoreScene.jsx`: procedural clothing rails, large photo panels, textures, frame-based player controls, graphics fallback.
 - `src/lib/products.js`: collection definitions, default catalog data module and currency formatting. `src/data/catalog.js` is the published snapshot of 21 real WooCommerce products in PKR. `src/data/sample-catalog.js` retains the original eight labelled samples.
-- `src/lib/world.js`: 12 fixed display footprints, bounded movement with substeps, safe collection positions.
+- `src/lib/world.js`: 12 fixed display footprints with three product positions each, bounded movement with substeps, safe collection positions.
 - `src/lib/controls.js`: transient touch movement shared with the render loop.
 - `src/lib/cart.js`: pure cart validation, stock caps and integer-cent totals.
 - `src/lib/store.js`: Zustand UI/world state, shared API catalog/settings, server-authenticated admin state and a versioned localStorage cart. Unknown cart IDs are preserved until shared catalog loading finishes.
@@ -55,4 +55,10 @@ The floating joystick listens only to touch pointers on the canvas when the prim
 
 ## Product display direction
 
-The owner removed the external image-to-model integration and boutique mannequin forms. Do not reintroduce generation services, tokens, generation buttons or model loaders unless requested. Boutique fixtures show large centred original product photos; other niche props remain procedural. Catalog validation forces photo presentation and drops unknown legacy generated-model fields on reads/saves/imports. Preserve the existing camera, mobile joystick, cart and protected CMS. Future work focuses on owner-directed shelves and display details. Migration 0002 removes only unused generated-asset tables; production application and removal of obsolete Cloudflare configuration require account access.
+The owner removed the external image-to-model integration and boutique mannequin forms. Do not reintroduce generation services, tokens, generation buttons or model loaders unless requested. Boutique fixtures now use garment rails with illustrative hanging garments and individual featured-photo tags; no body/mannequin forms. Other niche props remain procedural. Catalog validation forces photo presentation and drops unknown legacy generated-model fields on reads/saves/imports. Preserve the existing camera, mobile joystick, cart and protected CMS. Future work focuses on owner-directed shelves and display details. Migration 0002 removes only unused generated-asset tables; production application and removal of obsolete Cloudflare configuration require account access.
+
+## Multi-product merchandising and carried basket
+
+src/lib/merchandising.js defines 12 fixtures × 3 positions. LayoutVersion 2 preserves old anchor placements, fills formerly capacity-limited overflow once, and then preserves explicit catalog-only choices. Product uniqueness is (display, displaySlot), never display alone. Keep import/export, server validation and Admin occupancy checks aligned. Each SKU group owns its click target; fixture glass/shells must not intercept another product's selection. Keep all props inside the fixed world.js footprints.
+
+StoreFixtures.jsx provides garment rails, three-tier shoe racks, glazed bakery counters and detailed illustrative props. Materials use a generated RoomEnvironment only in high graphics, with no remote environment assets or per-frame mirror render passes. CarriedBasket.jsx follows the camera with a hand, limited cart-colour packages and reduced-motion-aware sway; it never creates per-quantity meshes. Scene rendering switches to demand behind panels while remaining mounted. NPCs are a requested possibility, not an implemented feature. No external image-to-model provider is restored.

@@ -35,6 +35,7 @@ const blank = () => ({
   image: "/products/sets.svg",
   stock: 10,
   display: null,
+  displaySlot: 0,
   presentation: "photo",
   tag: "YOUR COLLECTION",
   sourceUrl: "",
@@ -129,10 +130,16 @@ export default function CatalogEditor() {
     }
   }
   function exportFile() {
-    const { version, currency, source, products } = catalog;
+    const { version, layoutVersion, currency, source, products } = catalog;
     const url = URL.createObjectURL(
       new Blob(
-        [JSON.stringify({ version, currency, source, products }, null, 2)],
+        [
+          JSON.stringify(
+            { version, layoutVersion, currency, source, products },
+            null,
+            2,
+          ),
+        ],
         { type: "application/json" },
       ),
     );
@@ -295,29 +302,63 @@ export default function CatalogEditor() {
               <select
                 aria-label="Display position"
                 value={draft.display ?? ""}
-                onChange={(e) =>
-                  field(
-                    "display",
-                    e.target.value === "" ? null : Number(e.target.value),
-                  )
-                }
+                onChange={(e) => {
+                  const display =
+                    e.target.value === "" ? null : Number(e.target.value);
+                  const free = [draft.displaySlot ?? 0, 0, 1, 2].find(
+                    (slot) =>
+                      !catalog.products.some(
+                        (p) =>
+                          p.id !== draft.id &&
+                          p.display === display &&
+                          (p.displaySlot ?? 0) === slot,
+                      ),
+                  );
+                  setDraft((d) => ({ ...d, display, displaySlot: free ?? 0 }));
+                }}
               >
                 <option value="">Catalog only</option>
                 {Array.from({ length: 12 }, (_, i) => {
-                  const occupied = catalog.products.find(
+                  const count = catalog.products.filter(
                     (p) => p.display === i && p.id !== draft.id,
-                  );
+                  ).length;
+                  const occupied = count >= 3;
                   return (
                     <option key={i} value={i} disabled={!!occupied}>
                       Display {i + 1}
                       {i === 0 ? " · entrance feature" : ""}
-                      {occupied ? ` · ${occupied.name}` : ""}
+                      {` · ${count}/3 filled`}
                     </option>
                   );
                 })}
               </select>
             </label>
           </div>
+          {draft.display !== null && (
+            <label>
+              Position on fixture
+              <select
+                aria-label="Position on fixture"
+                value={draft.displaySlot ?? 0}
+                onChange={(e) => field("displaySlot", Number(e.target.value))}
+              >
+                {[0, 1, 2].map((slot) => (
+                  <option
+                    key={slot}
+                    value={slot}
+                    disabled={catalog.products.some(
+                      (p) =>
+                        p.id !== draft.id &&
+                        p.display === draft.display &&
+                        (p.displaySlot ?? 0) === slot,
+                    )}
+                  >
+                    Position {slot + 1}
+                  </option>
+                ))}
+              </select>
+            </label>
+          )}
           <p className="field-hint">
             Fixtures and decorative props follow the store type selected in
             Store & theme. The featured photo represents the actual product;
@@ -408,7 +449,7 @@ export default function CatalogEditor() {
           <p className="field-hint">
             Import reads publicly listed WooCommerce products, images, prices
             and currency. It never writes to WordPress. Quantity limits are for
-            this demo, not live inventory. Up to 12 products can be displayed in
+            this demo, not live inventory. Up to 36 products can be displayed in
             3D; all imported products appear in Product view.
           </p>
           {pending && (
@@ -471,7 +512,7 @@ export default function CatalogEditor() {
                     {money(p.price, catalog.currency)} ·{" "}
                     {p.display === null
                       ? "Catalog only"
-                      : `Display ${p.display + 1}`}{" "}
+                      : `Display ${p.display + 1} · Position ${(p.displaySlot ?? 0) + 1}`}{" "}
                     · Edit
                   </span>
                 </button>

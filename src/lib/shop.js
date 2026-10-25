@@ -1,8 +1,8 @@
 export const STORE_TYPES = {
   boutique: {
     name: "Boutique",
-    fixture: "glass-photo",
-    description: "Glass cases with large featured product photos",
+    fixture: "garment-rack",
+    description: "Clothing rails, hanging garments and individual photo tags",
     collections: [
       ["sets", "Lingerie sets", "heart"],
       ["bras", "Bras & bralettes", "sparkles"],
@@ -26,7 +26,7 @@ export const STORE_TYPES = {
   bakery: {
     name: "Bakery",
     fixture: "glass-counter",
-    description: "Glazed pastry counters",
+    description: "Glass pastry counters with polished mirrored backs",
     collections: [
       ["bakery-bread", "Bread", "package"],
       ["bakery-cakes", "Cakes", "heart"],
