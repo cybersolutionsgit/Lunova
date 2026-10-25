@@ -15,7 +15,9 @@
     "dev:cms": "wrangler pages dev dist --d1 DB --compatibility-date 2026-10-24 --port 8788",
     "db:local": "wrangler d1 execute local-DB --config wrangler.local.jsonc --local --file migrations/0001_cms.sql",
     "build:functions": "wrangler pages functions build --outdir /tmp/lunova-functions-build",
-    "build:functions:pages": "npm exec --yes --package wrangler@3.114.17 -- wrangler pages functions build --outdir /tmp/lunova-functions-pages"
+    "build:functions:pages": "npm exec --yes --package wrangler@3.114.17 -- wrangler pages functions build --outdir /tmp/lunova-functions-pages",
+    "sketchfab:search": "node scripts/sketchfab-search.mjs",
+    "models:import": "node scripts/import-sketchfab.mjs"
   },
   "dependencies": {
     "@react-three/drei": "^10.7.7",

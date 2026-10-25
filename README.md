@@ -90,3 +90,7 @@ Walking update checks passed: 27 unit/backend tests, 16 relevant Chromium browse
 [View the walking shopper and trolley preview](docs/walking-women-trolleys.png).
 
 For deployment cleanup, remove the unused `HF_TOKEN` secret and `HF_SPACE_URL` variable from Cloudflare Pages, and revoke the old provider token in its account settings. If the retired integration created database tables, `migrations/0002_remove_generated_models.sql` drops only those unused tables; it preserves products/settings, admin sessions and login limits. No automatic database deletion is performed by customer requests.
+
+## Sketchfab search and authorized model imports
+
+Admin → **3D models** adds official Sketchfab keyword/license/download-availability search, server-side OAuth preparation, creator/license credits and a local GLB/glTF preview. No existing store asset is automatically replaced. Live search for **supermarket shelf** was verified; personal-account authorization and real downloads await OAuth app registration and hosting setup. See [the exact next steps](docs/SKETCHFAB_SETUP.md).

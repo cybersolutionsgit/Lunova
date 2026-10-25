@@ -10,6 +10,7 @@ import {
 import { useCatalog, useWorld } from "../lib/store";
 import { STORE_TYPES } from "../lib/shop";
 import CatalogEditor from "./CatalogEditor";
+import SketchfabPanel from "./SketchfabPanel";
 function StoreSettings() {
   const { settings, updateSettings } = useCatalog();
   const [draft, setDraft] = useState(() => structuredClone(settings));
@@ -245,6 +246,12 @@ export default function AdminPanel() {
             <Palette size={16} />
             Store & theme
           </button>
+          <button
+            className={tab === "models" ? "active" : ""}
+            onClick={() => setTab("models")}
+          >
+            3D models
+          </button>
         </div>
         <button
           className="secondary-button"
@@ -290,6 +297,8 @@ export default function AdminPanel() {
       )}
       {tab === "products" ? (
         <CatalogEditor />
+      ) : tab === "models" ? (
+        <SketchfabPanel />
       ) : (
         <StoreSettings key={useCatalog.getState().revision} />
       )}

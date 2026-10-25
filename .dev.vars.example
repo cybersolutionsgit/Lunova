@@ -1,3 +1,10 @@
 # Server-only local configuration. Copy to .dev.vars and set your own password.
 ADMIN_USERNAME=Admin
 ADMIN_PASSWORD=
+
+# Optional Sketchfab OAuth. Never prefix these with VITE_.
+SKETCHFAB_CLIENT_ID=
+SKETCHFAB_CLIENT_SECRET=
+SKETCHFAB_REDIRECT_URI=https://shop.lunovasecrets.com/api/sketchfab/callback
+# 64 hex characters, generated privately in your hosting environment.
+SKETCHFAB_TOKEN_KEY=
